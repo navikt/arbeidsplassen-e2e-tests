@@ -3,7 +3,7 @@ kind: Naisjob
 metadata:
   labels:
     team: arbeidsplassen
-  name: arbeidsplassen_no-tests
+  name: e2e-tests
   namespace: arbeidsplassen
 spec:
   schedule: "* * * * *"
