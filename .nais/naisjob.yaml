@@ -12,3 +12,9 @@ spec:
     requests:
       cpu: 200m
       memory: 256Mi
+  spec:
+    accessPolicy:
+      outbound:
+        external:
+          - host: arbeidsplassen.nav.no
+          - host: arbeidsplassen.intern.dev.nav.no
