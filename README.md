@@ -1,2 +1,2 @@
-# arbeidsplassen-playwright
-Arbeidsplassen Playwright
+# arbeidsplassen-tests
+Arbeidsplassen tests
