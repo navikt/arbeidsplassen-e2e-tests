@@ -1,0 +1,14 @@
+# Dependencies
+node_modules/
+
+# Testing
+/coverage
+/playwright-report/
+/test-results/
+/screenshots/
+/playwright/.cache/
+/playwright/.screenshots/
+
+# Playwright
+/playwright-*
+
