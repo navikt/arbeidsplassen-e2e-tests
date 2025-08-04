@@ -6,7 +6,6 @@ metadata:
   name: e2e-tests
   namespace: arbeidsplassen
 spec:
-  schedule: "* * * * *"
   image: {{ image }}
   resources:
     requests:
