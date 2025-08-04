@@ -1,0 +1,14 @@
+apiVersion: nais.io/v1
+kind: Naisjob
+metadata:
+  labels:
+    team: arbeidsplassen
+  name: arbeidsplassen_no-tests
+  namespace: arbeidsplassen
+spec:
+  schedule: "* * * * *"
+  image: {{ image }}
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
