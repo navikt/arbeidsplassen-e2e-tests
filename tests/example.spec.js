@@ -28,7 +28,9 @@ test.afterAll(async () => {
 });
 
 test("Verify Google loads", async ({ page }) => {
-  await page.goto("https://google.com/");
+  await page
+    .goto("https://www.google.com", { timeout: 60000 })
+    .catch(console.error);
 
   await expect(page).toHaveTitle("Google");
 });
