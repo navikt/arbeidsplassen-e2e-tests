@@ -11,10 +11,10 @@ spec:
   image: {{ image }}
   resources:
     requests:
-      cpu: 200m
-      memory: 1024Mi
+      cpu: 500m
+      memory: 512Mi
     limits:
-      memory: 3096Mi
+      memory: 8192Mi
   accessPolicy:
     outbound:
       external:
