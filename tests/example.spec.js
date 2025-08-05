@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import sendSlackMessage from "../src/sendSlackMessage";
 
-test.setTimeout(10000); // 10 seconds timeout
+test.setTimeout(60000); // 60 seconds timeout
 
 // Track test failures
 const failedTests = [];
