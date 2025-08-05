@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import sendSlackMessage from "../src/sendSlackMessage";
 
-test.setTimeout(60000); // 60 seconds timeout
+// test.setTimeout(10000); // 10 seconds timeout
 
 // Track test failures
 const failedTests = [];
@@ -29,7 +29,7 @@ test.afterAll(async () => {
 
 test("Verify Google loads", async ({ page }) => {
   await page
-    .goto("https://www.google.com", { timeout: 60000 })
+    .goto("https://www.google.com")
     .catch(console.error);
 
   await expect(page).toHaveTitle("Google");
