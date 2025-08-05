@@ -5,6 +5,7 @@ metadata:
     nais.io/read-only-file-system: "false"
   labels:
     team: arbeidsplassen
+    e2e: arbeidsplassen
   name: e2e-tests
   namespace: arbeidsplassen
 spec:
