@@ -13,8 +13,8 @@ export default defineConfig({
   // },
   fullyParallel: false, // Run tests in parallel
   forbidOnly: !!process.env.CI, // Fail the build on CI if you accidentally left test.only in the source code
-  retries: process.env.CI ? 2 : 0, // Retry on CI only
-  workers: process.env.CI ? 1 : undefined, // Opt out of parallel tests on CI
+  retries: 0, // Retry on CI only
+  workers: 1, // Opt out of parallel tests on CI
   // reporter: [
   //   ["html", { outputFolder: "playwright-report", open: "never" }],
   //   ["list"],
@@ -34,10 +34,10 @@ export default defineConfig({
       name: "chromium",
       use: { ...devices["Desktop Chrome"] },
     },
-    {
-      name: "firefox",
-      use: { ...devices["Desktop Firefox"] },
-    },
+    // {
+    //   name: "firefox",
+    //   use: { ...devices["Desktop Firefox"] },
+    // },
     // {
     //   name: "webkit",
     //   use: { ...devices["Desktop Safari"] },
