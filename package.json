@@ -7,7 +7,8 @@
     "test": "playwright test --project chromium"
   },
   "devDependencies": {
-    "@playwright/test": "^1.54.0"
+    "@playwright/test": "^1.54.0",
+    "node-fetch": "^3.3.2"
   },
   "engines": {
     "node": ">=16.0.0"
