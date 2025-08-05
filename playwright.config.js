@@ -25,6 +25,9 @@ export default defineConfig({
     trace: "on-first-retry", // Record trace when retrying a failed test
     screenshot: "only-on-failure", // Take screenshots only on failure
     video: "on-first-retry", // Record video when retrying a failed test
+    launchOptions: {
+      args: ["--no-zygote"],
+    }
   },
   projects: [
     {
