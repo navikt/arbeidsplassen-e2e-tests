@@ -6,7 +6,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./tests", // Directory containing test files
-  outputDir: "./test-results", // Directory for test artifacts
+  outputDir: "/tmp/test-results", // Directory for test artifacts
   // timeout: 30 * 1000, // Global timeout for tests
   // expect: {
   //   timeout: 5000, // Timeout for expect assertions
