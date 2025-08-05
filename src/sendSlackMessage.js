@@ -15,7 +15,7 @@ async function sendSlackMessage(message) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      channel: CHANNEL, // changed CHANNEL to channel
+      channel: CHANNEL,
       text: message,
     }),
   });
