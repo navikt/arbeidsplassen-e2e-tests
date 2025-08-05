@@ -15,4 +15,6 @@ COPY . /app
 
 RUN chown -R 1069:1069 /app
 
+ENV DEBUG=pw:browser,pw:api
+
 CMD ["npm", "run", "test"]
