@@ -1,14 +1,18 @@
-FROM mcr.microsoft.com/playwright:v1.54.1-noble
+FROM node:24-bookworm
 
 ENV TZ="Europe/Oslo"
+ENV PLAYWRIGHT_BROWSERS_PATH=/app/playwright-install
+ENV HOME=/app
 
-WORKDIR /usr/src/app
+RUN npx -y playwright@1.54.0 install --with-deps
+
+WORKDIR /app
 
 COPY package*.json ./
 RUN npm install
 
-COPY . .
+COPY . /app
 
-ENV DEBUG=pw:browser,pw:api
+RUN chown -R 1069:1069 /app
 
 CMD ["npm", "run", "test"]
