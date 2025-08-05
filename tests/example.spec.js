@@ -2,6 +2,27 @@ import { test, expect } from "@playwright/test";
 
 test.setTimeout(10000); // 10 seconds timeout
 
+test("Verify Google loads", async ({ page }) => {
+  await page.goto("https://google.com/");
+
+  await expect(page).toHaveTitle("Google");
+});
+
+test("Test jsonplaceholder", async ({ page }) => {
+  try {
+    const response = await fetch("https://jsonplaceholder.typicode.com/todos/1");
+    if (!response.ok) {
+      throw new Error(`Response status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    console.log(result);
+  } catch (error) {
+    console.error(error.message);
+  }
+});
+
+
 test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
   await page.goto("https://arbeidsplassen.nav.no/");
 
