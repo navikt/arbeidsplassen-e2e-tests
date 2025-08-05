@@ -47,7 +47,7 @@ test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
   await page.goto("https://arbeidsplassen.intern.dev.nav.no/");
 
   await expect(page).toHaveTitle(
-    "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
+    "Arbeidsplassen.no - Alle ledige jobber, samlt på én plass"
   );
 
   await page.screenshot({ path: "screenshots/homepage-dev.png" }); // Changed filename to avoid overwrite
