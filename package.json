@@ -4,7 +4,7 @@
   "description": "End-to-end tests for Arbeidsplassen using Playwright",
   "type": "module",
   "scripts": {
-    "test": "playwright test"
+    "test": "playwright test --project chromium"
   },
   "devDependencies": {
     "@playwright/test": "^1.54.0"

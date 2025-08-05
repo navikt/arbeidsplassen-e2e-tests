@@ -8,22 +8,22 @@ test("Verify Google loads", async ({ page }) => {
   await expect(page).toHaveTitle("Google");
 });
 
-test("Test jsonplaceholder", async ({ page }) => {
-  // try {
-  //   const response = await fetch("https://jsonplaceholder.typicode.com/todos/1");
-  //   if (!response.ok) {
-  //     throw new Error(`Response status: ${response.status}`);
-  //   }
-  //
-  //   const result = await response.json();
-  //   console.log(result);
-  // } catch (error) {
-  //   console.error(error.message);
-  // }
-
-    await page.goto("https://jsonplaceholder.typicode.com/todos/1/");
-
-});
+// test("Test jsonplaceholder", async ({ page }) => {
+//   // try {
+//   //   const response = await fetch("https://jsonplaceholder.typicode.com/todos/1");
+//   //   if (!response.ok) {
+//   //     throw new Error(`Response status: ${response.status}`);
+//   //   }
+//   //
+//   //   const result = await response.json();
+//   //   console.log(result);
+//   // } catch (error) {
+//   //   console.error(error.message);
+//   // }
+//
+//     await page.goto("https://jsonplaceholder.typicode.com/todos/1/");
+//
+// });
 //
 //
 // test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
