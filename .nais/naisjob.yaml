@@ -10,6 +10,9 @@ metadata:
   namespace: arbeidsplassen
 spec:
   image: {{ image }}
+   env:
+    - name: SLACK_BOT_TOKEN
+      value: {{ env "SLACK_BOT_TOKEN" }}
   resources:
     requests:
       cpu: 500m

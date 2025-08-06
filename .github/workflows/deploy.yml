@@ -31,3 +31,4 @@ jobs:
           RESOURCE: .nais/naisjob.yaml
           VAR: image=${{ steps.docker-build-push.outputs.image }}
           TELEMETRY: ${{ steps.docker-build-push.outputs.telemetry }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
