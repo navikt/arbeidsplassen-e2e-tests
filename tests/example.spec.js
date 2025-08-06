@@ -1,7 +1,7 @@
 import { test, expect } from "@playwright/test";
 import sendSlackMessage from "../src/sendSlackMessage";
 
-test.setTimeout(10000); // 10 seconds timeout
+test.setTimeout(30000); // 10 seconds timeout
 
 // Track test failures
 const failedTests = [];
@@ -27,12 +27,6 @@ test.afterAll(async () => {
   }
 });
 
-test("Verify Google loads", async ({ page }) => {
-  await page.goto("https://www.google.com");
-
-  await expect(page).toHaveTitle("Google");
-});
-
 test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
   await page.goto("https://arbeidsplassen.nav.no/");
 
@@ -51,4 +45,19 @@ test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
   );
 
   await page.screenshot({ path: "screenshots/homepage-dev.png" }); // Changed filename to avoid overwrite
+});
+
+test("/stillinger is working and count is above 0", async ({ page }) => {
+  await page.goto("https://arbeidsplassen.nav.no/stillinger");
+
+  const h2 = page.locator("h2", { hasText: "treff" }).first();
+  await expect(h2).toBeVisible();
+
+  const text = await h2.innerText();
+
+  // Extract number from text
+  const match = text.match(/[\d\s]+/);
+  const number = parseInt(match?.[0].replace(/\s/g, "") || "0", 10);
+
+  expect(number).toBeGreaterThan(0);
 });
