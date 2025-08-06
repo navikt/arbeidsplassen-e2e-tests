@@ -10,8 +10,6 @@ metadata:
   namespace: arbeidsplassen
 spec:
   image: { { image } }
-  envFrom:
-    - secret: slack-bot
   resources:
     requests:
       cpu: 500m
