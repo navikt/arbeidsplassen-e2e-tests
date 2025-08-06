@@ -4,7 +4,7 @@ on:
     branches:
       - main
   workflow_call:
-    repository_dispatch:
+  repository_dispatch:
     types: [trigger-from-public-repo]
 
 jobs:
