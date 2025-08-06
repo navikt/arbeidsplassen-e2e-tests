@@ -9,10 +9,10 @@ metadata:
   name: e2e-tests
   namespace: arbeidsplassen
 spec:
-  image: {{ image }}
-   env:
+  image: { { image } }
+  env:
     - name: SLACK_BOT_TOKEN
-      value: {{ env "SLACK_BOT_TOKEN" }}
+      value: { { env "SLACK_BOT_TOKEN" } }
   resources:
     requests:
       cpu: 500m
