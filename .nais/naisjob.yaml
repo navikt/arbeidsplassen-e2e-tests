@@ -9,6 +9,7 @@ metadata:
   name: e2e-tests
   namespace: arbeidsplassen
 spec:
+  concurrencyPolicy: Forbid
   image: {{ image }}
   envFrom:
     - secret: slack-bot
