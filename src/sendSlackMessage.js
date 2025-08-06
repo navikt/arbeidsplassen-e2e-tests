@@ -5,6 +5,7 @@ const CHANNEL = "#team-arbeidsplassen_no-alerts";
 async function sendSlackMessage(message) {
   if (!SLACK_BOT_TOKEN) {
     console.error("No Slack token");
+    console.error(message);
     return;
   }
 
