@@ -9,7 +9,9 @@ metadata:
   name: e2e-tests
   namespace: arbeidsplassen
 spec:
-  image: { { image } }
+  image: {{ image }}
+  envFrom:
+    - secret: slack-bot
   resources:
     requests:
       cpu: 500m
