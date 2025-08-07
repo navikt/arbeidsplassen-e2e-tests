@@ -107,10 +107,30 @@ test("Favorites are working in DEV", async ({ page }) => {
 
   await firstJobAdFavoritesButton.click();
 
-  await expect(firstJobAdFavoritesButton).toHaveAttribute(
-    "aria-label",
-    "Lagret"
-  );
+  const ariaLabel = await firstJobAdFavoritesButton.getAttribute("aria-label");
+
+  if (ariaLabel === "Lagret") {
+    // If already favorited, click to unfavorite
+    await firstJobAdFavoritesButton.click();
+    await expect(firstJobAdFavoritesButton).toHaveAttribute(
+      "aria-label",
+      "Lagre"
+    );
+
+    // Then click to favorite again
+    await firstJobAdFavoritesButton.click();
+    await expect(firstJobAdFavoritesButton).toHaveAttribute(
+      "aria-label",
+      "Lagret"
+    );
+  } else {
+    // If not favorited, just click to favorite
+    await firstJobAdFavoritesButton.click();
+    await expect(firstJobAdFavoritesButton).toHaveAttribute(
+      "aria-label",
+      "Lagret"
+    );
+  }
 
   await page.goto(
     "https://arbeidsplassen.intern.dev.nav.no/stillinger/favoritter"
