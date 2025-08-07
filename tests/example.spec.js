@@ -1,8 +1,6 @@
 import { test, expect } from "@playwright/test";
 import sendSlackMessage from "../src/sendSlackMessage";
-import { getLoggedInPage } from "./helpers";
-
-test.setTimeout(30000); // 10 seconds timeout
+import { getDevDomain, getLoggedInPage, getProdDomain } from "./helpers";
 
 // Track test failures
 const failedTests = [];
@@ -29,7 +27,7 @@ test.afterAll(async () => {
 });
 
 test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
-  await page.goto("https://arbeidsplassen.nav.no/");
+  await page.goto(getProdDomain());
 
   await expect(page).toHaveTitle(
     "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
@@ -39,7 +37,7 @@ test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
 });
 
 test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
-  await page.goto("https://arbeidsplassen.intern.dev.nav.no/");
+  await page.goto(getDevDomain());
 
   await expect(page).toHaveTitle(
     "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
@@ -48,8 +46,10 @@ test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
   await page.screenshot({ path: "screenshots/homepage-dev.png" }); // Changed filename to avoid overwrite
 });
 
-test("/stillinger is working and count is above 0", async ({ page }) => {
-  await page.goto("https://arbeidsplassen.nav.no/stillinger");
+test("/stillinger is working in PROD and count is above 0", async ({
+  page,
+}) => {
+  await page.goto(getProdDomain() + "/stillinger");
 
   const h2 = page.locator("h2", { hasText: "treff" }).first();
   await expect(h2).toBeVisible();
@@ -66,9 +66,7 @@ test("/stillinger is working and count is above 0", async ({ page }) => {
 test("Favorites are working in DEV", async ({ page }) => {
   const loggedInPage = await getLoggedInPage(page);
 
-  await loggedInPage.goto(
-    "https://arbeidsplassen.intern.dev.nav.no/stillinger"
-  );
+  await loggedInPage.goto(getDevDomain() + "/stillinger");
 
   const firstJobAd = loggedInPage.locator("article").first();
   await expect(firstJobAd).toBeVisible();
@@ -106,9 +104,7 @@ test("Favorites are working in DEV", async ({ page }) => {
     );
   }
 
-  await page.goto(
-    "https://arbeidsplassen.intern.dev.nav.no/stillinger/favoritter"
-  );
+  await page.goto(getDevDomain() + "/stillinger/favoritter");
 
   const h1 = page.locator("h1").first();
   await expect(h1).toBeVisible();

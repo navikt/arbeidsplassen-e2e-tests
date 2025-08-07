@@ -1,5 +1,9 @@
 import { expect } from "@playwright/test";
 
+const DEV_DOMAIN = "https://arbeidsplassen.intern.dev.nav.no";
+const PROD_DOMAIN = "https://arbeidsplassen.nav.no";
+const LOCAL_DOMAIN = "http://localhost:3000";
+
 export const getLoggedInPage = async (page) => {
   await page.goto("https://arbeidsplassen.intern.dev.nav.no/");
 
@@ -32,4 +36,18 @@ export const getLoggedInPage = async (page) => {
   ).toBeVisible();
 
   return page;
+};
+
+export const getDevDomain = () => {
+  if (process.env.LOCALHOST === "true") {
+    return LOCAL_DOMAIN;
+  }
+  return DEV_DOMAIN;
+};
+
+export const getProdDomain = () => {
+  if (process.env.LOCALHOST === "true") {
+    return LOCAL_DOMAIN;
+  }
+  return PROD_DOMAIN;
 };
