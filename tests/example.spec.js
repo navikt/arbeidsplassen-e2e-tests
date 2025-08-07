@@ -93,4 +93,29 @@ test("Favorites are working in DEV", async ({ page }) => {
   await expect(
     page.locator("a", { hasText: "Min side" }).first()
   ).toBeVisible();
+
+  await page.goto("https://arbeidsplassen.intern.dev.nav.no/stillinger");
+
+  const firstJobAd = page.locator("article").first();
+  await expect(firstJobAd).toBeVisible();
+
+  const firstJobAdHeading = await firstJobAd.locator("h2").textContent();
+
+  const firstJobAdFavoritesButton = firstJobAd.locator(
+    "button.FavouriteButton"
+  );
+
+  await firstJobAdFavoritesButton.click();
+
+  const myFavoritesButton = page
+    .locator("a", { hasText: "Favoritter" })
+    .first();
+  await myFavoritesButton.click();
+
+  await expect(page.url()).toMatch(
+    `https://arbeidsplassen.intern.dev.nav.no/stillinger/favoritter`
+  );
+
+  const h1 = page.locator("h1").first();
+  await expect(h1).toBeVisible();
 });
