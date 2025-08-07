@@ -87,7 +87,7 @@ test("Favorites are working in DEV", async ({ page }) => {
   expect(page.url()).toMatch(`https://arbeidsplassen.intern.dev.nav.no/`);
 
   await expect(page).toHaveTitle(
-    "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
+    "Arbeidsplassen.no - Alle ledige jobber, samlet på énplass"
   );
 
   await expect(
