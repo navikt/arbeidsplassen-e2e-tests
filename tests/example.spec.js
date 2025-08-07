@@ -107,15 +107,23 @@ test("Favorites are working in DEV", async ({ page }) => {
 
   await firstJobAdFavoritesButton.click();
 
-  const myFavoritesButton = page
-    .locator("a", { hasText: "Favoritter" })
-    .first();
-  await myFavoritesButton.click();
+  await expect(firstJobAdFavoritesButton).toHaveAttribute(
+    "aria-label",
+    "Lagret"
+  );
 
-  await expect(page.url()).toMatch(
-    `https://arbeidsplassen.intern.dev.nav.no/stillinger/favoritter`
+  await page.goto(
+    "https://arbeidsplassen.intern.dev.nav.no/stillinger/favoritter"
   );
 
   const h1 = page.locator("h1").first();
   await expect(h1).toBeVisible();
+
+  // Find the article that contains the same heading text
+  const matchingFavorite = page.locator("article", {
+    has: page.locator(`a`, { hasText: firstJobAdHeading?.trim() || "" }),
+  });
+
+  // Assert that it exists and is visible
+  await expect(matchingFavorite).toBeVisible();
 });
