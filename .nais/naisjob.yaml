@@ -9,6 +9,7 @@ metadata:
   name: e2e-tests
   namespace: arbeidsplassen
 spec:
+  backoffLimit: 0
   concurrencyPolicy: Forbid
   image: {{ image }}
   envFrom:
