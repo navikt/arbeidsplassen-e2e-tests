@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import sendSlackMessage from "../src/sendSlackMessage";
+import { getLoggedInPage } from "./helpers";
 
 test.setTimeout(30000); // 10 seconds timeout
 
@@ -63,40 +64,13 @@ test("/stillinger is working and count is above 0", async ({ page }) => {
 });
 
 test("Favorites are working in DEV", async ({ page }) => {
-  await page.goto("https://arbeidsplassen.intern.dev.nav.no/");
+  const loggedInPage = await getLoggedInPage(page);
 
-  const login = page.locator("button", { hasText: "Logg inn" }).first();
-  await login.click();
-
-  expect(page.url()).toMatch(
-    `https://login.test.idporten.no/authorize/selector`
+  await loggedInPage.goto(
+    "https://arbeidsplassen.intern.dev.nav.no/stillinger"
   );
 
-  const loginIdPorten = page.locator("a", { hasText: "TestID" }).first();
-  await loginIdPorten.click();
-
-  expect(
-    page.url().startsWith("https://testid.test.idporten.no/authorize")
-  ).toBe(true);
-
-  await page.fill("input[id=pid]", "07499738492");
-
-  await page.click("button[type=submit]");
-  console.log("URL", page.url());
-
-  expect(page.url()).toMatch(`https://arbeidsplassen.intern.dev.nav.no/`);
-
-  await expect(page).toHaveTitle(
-    "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
-  );
-
-  await expect(
-    page.locator("a", { hasText: "Min side" }).first()
-  ).toBeVisible();
-
-  await page.goto("https://arbeidsplassen.intern.dev.nav.no/stillinger");
-
-  const firstJobAd = page.locator("article").first();
+  const firstJobAd = loggedInPage.locator("article").first();
   await expect(firstJobAd).toBeVisible();
 
   const firstJobAdHeading = await firstJobAd.locator("h2").textContent();
