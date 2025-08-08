@@ -1,0 +1,33 @@
+# NetworkPolicy applied in dev-gcp
+# kubectl apply -f network-policy.yaml -n arbeidsplassen
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: e2e-tests-custom-policy
+  namespace: arbeidsplassen
+spec:
+  egress:
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+  ingress:
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: nais-system
+          podSelector:
+            matchLabels:
+              app: prometheus
+  podSelector:
+    matchLabels:
+      e2e: arbeidsplassen
+  policyTypes:
+    - Ingress
+    - Egress
