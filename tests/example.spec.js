@@ -32,8 +32,6 @@ test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
   await expect(page).toHaveTitle(
     "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
   );
-
-  await page.screenshot({ path: "screenshots/homepage.png" });
 });
 
 test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
@@ -42,8 +40,6 @@ test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
   await expect(page).toHaveTitle(
     "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
   );
-
-  await page.screenshot({ path: "screenshots/homepage-dev.png" }); // Changed filename to avoid overwrite
 });
 
 test("/stillinger is working in PROD and count is above 0", async ({
