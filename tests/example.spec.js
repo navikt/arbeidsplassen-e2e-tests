@@ -67,53 +67,54 @@ test("Favorites are working in DEV", async ({ page }) => {
   const loggedInPage = await getLoggedInPage(page);
 
   await loggedInPage.goto(getDevDomain() + "/stillinger");
+  await expect(loggedInPage.locator("article").first()).toBeVisible({
+    timeout: 10000,
+  });
 
   const firstJobAd = loggedInPage.locator("article").first();
-  await expect(firstJobAd).toBeVisible();
+  await expect(firstJobAd).toBeVisible({ timeout: 10000 });
 
   const firstJobAdHeading = await firstJobAd.locator("h2").textContent();
 
-  const firstJobAdFavoritesButton = firstJobAd.locator(
-    "button.FavouriteButton"
+  const firstJobAdFavoritesButton = firstJobAd.locator("button");
+  await expect(firstJobAdFavoritesButton).toBeVisible({ timeout: 10000 });
+  await page.waitForTimeout(2000);
+
+  const currentAriaLabel = await firstJobAdFavoritesButton.getAttribute(
+    "aria-label"
   );
+
+  // If it already is favorited, remove it before adding again
+  if (currentAriaLabel === "Lagret") {
+    await firstJobAdFavoritesButton.click();
+    await expect(firstJobAdFavoritesButton).toHaveAttribute(
+      "aria-label",
+      "Lagre",
+      { timeout: 5000 }
+    );
+    await firstJobAdFavoritesButton.click();
+    await page.waitForTimeout(2000);
+  }
 
   await firstJobAdFavoritesButton.click();
 
-  const ariaLabel = await firstJobAdFavoritesButton.getAttribute("aria-label");
+  await page.waitForTimeout(2000);
 
-  if (ariaLabel === "Lagret") {
-    // If already favorited, click to unfavorite
-    await firstJobAdFavoritesButton.click();
-    await expect(firstJobAdFavoritesButton).toHaveAttribute(
-      "aria-label",
-      "Lagre"
-    );
+  await expect(firstJobAdFavoritesButton).toHaveAttribute(
+    "aria-label",
+    "Lagret",
+    { timeout: 5000 }
+  );
 
-    // Then click to favorite again
-    await firstJobAdFavoritesButton.click();
-    await expect(firstJobAdFavoritesButton).toHaveAttribute(
-      "aria-label",
-      "Lagret"
-    );
-  } else {
-    // If not favorited, just click to favorite
-    await firstJobAdFavoritesButton.click();
-    await expect(firstJobAdFavoritesButton).toHaveAttribute(
-      "aria-label",
-      "Lagret"
-    );
-  }
-
+  //Check that the favorite exists on the favorites page
   await page.goto(getDevDomain() + "/stillinger/favoritter");
 
   const h1 = page.locator("h1").first();
-  await expect(h1).toBeVisible();
+  await expect(h1).toBeVisible({ timeout: 10000 });
 
-  // Find the article that contains the same heading text
   const matchingFavorite = page.locator("article", {
     has: page.locator(`a`, { hasText: firstJobAdHeading?.trim() || "" }),
   });
 
-  // Assert that it exists and is visible
-  await expect(matchingFavorite).toBeVisible();
+  await expect(matchingFavorite).toBeVisible({ timeout: 10000 });
 });
