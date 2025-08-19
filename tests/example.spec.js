@@ -87,17 +87,15 @@ test("Favorites are working in DEV", async ({ page }) => {
   // If it already is favorited, remove it before adding again
   if (currentAriaLabel === "Lagret") {
     await firstJobAdFavoritesButton.click();
+    await page.waitForTimeout(2000);
     await expect(firstJobAdFavoritesButton).toHaveAttribute(
       "aria-label",
       "Lagre",
       { timeout: 5000 }
     );
-    await firstJobAdFavoritesButton.click();
-    await page.waitForTimeout(2000);
   }
 
   await firstJobAdFavoritesButton.click();
-
   await page.waitForTimeout(2000);
 
   await expect(firstJobAdFavoritesButton).toHaveAttribute(
