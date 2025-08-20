@@ -13,7 +13,7 @@ test("/stillinger is working in PROD and count is above 0", async ({
 }) => {
   await page.goto(getProdDomain() + "/stillinger");
 
-  const h2 = page.locator("h2", { hasText: "tref" }).first();
+  const h2 = page.locator("h2", { hasText: "trff" }).first();
   await expect(h2).toBeVisible();
 
   const text = await h2.innerText();
