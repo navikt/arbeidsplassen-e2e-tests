@@ -1,4 +1,4 @@
-FROM node:24-bookworm
+FROM node:24-bookworm-slim
 
 ENV TZ="Europe/Oslo"
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/playwright-install
