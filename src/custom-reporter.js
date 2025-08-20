@@ -7,7 +7,6 @@ class CustomReporter {
 
   onTestEnd(test, result) {
     if (result.status === "failed" || result.status === "timedOut") {
-      // Get the project name from the test's project() method
       const project = test.parent.project() || {};
       const projectName = project?.name || "unknown";
 
@@ -26,4 +25,7 @@ class CustomReporter {
   }
 }
 
-export default CustomReporter;
+// Export a factory function
+export default function () {
+  return new CustomReporter();
+}

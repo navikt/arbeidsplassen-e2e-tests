@@ -1,5 +1,5 @@
-import { getFailedTests } from "../src/global-state.js";
-import sendSlackMessage from "../src/sendSlackMessage.js";
+import { getFailedTests } from "./global-state.js";
+import sendSlackMessage from "./sendSlackMessage.js";
 
 export default async function globalTeardown() {
   const failedTests = getFailedTests();

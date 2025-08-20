@@ -1,5 +1,10 @@
 // @ts-check
 import { defineConfig, devices } from "@playwright/test";
+import { fileURLToPath } from "url";
+import path from "path";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 /**
  * @see https://playwright.dev/docs/test-configuration
@@ -7,14 +12,14 @@ import { defineConfig, devices } from "@playwright/test";
 export default defineConfig({
   testDir: "./tests", // Directory containing test files
   outputDir: "./test-results", // Directory for test artifacts
-  globalTeardown: "./src/custom-reporter.js",
+  globalTeardown: path.join(__dirname, "src/global-teardown.js"),
   timeout: 30 * 1000, // Global timeout for tests
   expect: {
-    timeout: 10 * 1000, // Timeout for expect assertions
+    timeout: 5000, // Timeout for expect assertions
   },
   fullyParallel: false, // Don`t run tests in parallel
   forbidOnly: !!process.env.CI, // Fail the build on CI if you accidentally left test.only in the source code
-  retries: 2,
+  retries: process.env.CI ? 2 : 0, // Retry on CI only
   workers: 1,
   reporter: [
     ["html", { outputFolder: "playwright-report", open: "never" }],
