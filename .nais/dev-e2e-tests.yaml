@@ -10,6 +10,11 @@ metadata:
   namespace: arbeidsplassen
 spec:
   backoffLimit: 0
+  command:
+    - npx
+    - playwright
+    - test
+    - dev-e2e
   concurrencyPolicy: Forbid
   image: {{ image }}
   envFrom:
