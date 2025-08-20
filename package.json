@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "test": "playwright test",
+    "test:dev-e2e": "playwright test dev-e2e",
+    "test:prod-uptest": "playwright test prod-uptest",
     "test:localhost": "LOCALHOST=true playwright test"
   },
   "devDependencies": {
