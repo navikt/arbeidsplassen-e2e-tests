@@ -6,7 +6,7 @@ metadata:
   labels:
     team: arbeidsplassen
     e2e: arbeidsplassen
-  name: dev-e2e-tests
+  name: prod-e2e-tests
   namespace: arbeidsplassen
 spec:
   schedule: "6-23/5 * * * *"
