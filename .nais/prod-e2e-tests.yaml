@@ -1,0 +1,33 @@
+apiVersion: nais.io/v1
+kind: Naisjob
+metadata:
+  annotations:
+    nais.io/read-only-file-system: "false"
+  labels:
+    team: arbeidsplassen
+    e2e: arbeidsplassen
+  name: dev-e2e-tests
+  namespace: arbeidsplassen
+spec:
+  schedule: "6-23/5 * * * *"
+  backoffLimit: 0
+  command:
+    - npx
+    - playwright
+    - test
+    - prod-uptest
+  concurrencyPolicy: Forbid
+  image: {{ image }}
+  envFrom:
+    - secret: slack-bot
+  resources:
+    requests:
+      cpu: 500m
+      memory: 512Mi
+    limits:
+      memory: 8192Mi
+  accessPolicy:
+    outbound:
+      external:
+        - host: arbeidsplassen.nav.no
+        - host: arbeidsplassen.intern.dev.nav.no
