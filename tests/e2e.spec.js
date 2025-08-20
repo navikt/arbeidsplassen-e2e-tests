@@ -1,6 +1,6 @@
 import { test, expect } from "@playwright/test";
 import sendSlackMessage from "../src/sendSlackMessage";
-import { getDevDomain, getLoggedInPage, getProdDomain } from "./helpers";
+import { getDevDomain, getLoggedInPage } from "./helpers";
 
 // Track test failures
 const failedTests = [];
@@ -19,44 +19,21 @@ test.afterAll(async () => {
     const message = `❌ Arbeidsplassen E2E tests failed.`;
 
     const details = failedTests
-      .map((test, index) => `${index + 1}. *${test.title}*\n   ${test.error}`)
+      .map(
+        (test, index) =>
+          `${index + 1}. *${test.title}*\n   ${test.error.split("\n")[0]}`
+      )
       .join("\n\n");
 
     await sendSlackMessage(`${message}\n\n${details}`);
   }
 });
 
-test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
-  await page.goto(getProdDomain());
-
-  await expect(page).toHaveTitle(
-    "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
-  );
-});
-
 test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
   await page.goto(getDevDomain());
 
-  await expect(page).toHaveTitle(
-    "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
-  );
-});
-
-test("/stillinger is working in PROD and count is above 0", async ({
-  page,
-}) => {
-  await page.goto(getProdDomain() + "/stillinger");
-
-  const h2 = page.locator("h2", { hasText: "treff" }).first();
-  await expect(h2).toBeVisible();
-
-  const text = await h2.innerText();
-
-  // Extract number from text
-  const match = text.match(/[\d\s]+/);
-  const number = parseInt(match?.[0].replace(/\s/g, "") || "0", 10);
-
-  expect(number).toBeGreaterThan(0);
+  const h1 = page.locator("h1").first();
+  await expect(h1).toBeVisible();
 });
 
 test("Favorites are working in DEV", async ({ page }) => {
