@@ -32,7 +32,7 @@ test("Check accessibility on pages", async ({ page }) => {
     if (visitedUrls.has(url) || visitedUrls.size >= maxPagesToCheck) return;
 
     console.log(`Checking: ${url}`);
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(500);
     await page.goto(url);
     visitedUrls.add(url);
 
