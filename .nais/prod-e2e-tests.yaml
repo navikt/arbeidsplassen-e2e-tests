@@ -9,7 +9,7 @@ metadata:
   name: prod-e2e-tests
   namespace: arbeidsplassen
 spec:
-  schedule: "*/5 6-23 * * *"
+  schedule: "*/2 6-23 * * *"
   backoffLimit: 0
   command:
     - npx
