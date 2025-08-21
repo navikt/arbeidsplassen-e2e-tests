@@ -2,33 +2,6 @@ import { test, expect } from "@playwright/test";
 import sendSlackMessage from "../src/sendSlackMessage";
 import { getDevDomain, getLoggedInPage } from "./helpers";
 
-// Track test failures
-const failedTests = [];
-
-test.afterEach(async ({}, testInfo) => {
-  if (testInfo.status === "failed") {
-    failedTests.push({
-      title: testInfo.title,
-      error: testInfo.error?.message || "Test failed",
-    });
-  }
-});
-
-test.afterAll(async () => {
-  if (failedTests.length > 0) {
-    const message = `❌ Arbeidsplassen E2E tests failed.`;
-
-    const details = failedTests
-      .map(
-        (test, index) =>
-          `${index + 1}. *${test.title}*\n   ${test.error.split("\n")[0]}`
-      )
-      .join("\n\n");
-
-    await sendSlackMessage(`${message}\n\n${details}`);
-  }
-});
-
 test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
   await page.goto(getDevDomain());
 
