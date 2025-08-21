@@ -51,3 +51,7 @@ export const getProdDomain = () => {
   }
   return PROD_DOMAIN;
 };
+
+export const getLocalDomain = () => {
+  return LOCAL_DOMAIN;
+};

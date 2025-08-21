@@ -1,12 +1,134 @@
 import { test, expect } from "@playwright/test";
-import sendSlackMessage from "../src/sendSlackMessage";
 import { getDevDomain, getLoggedInPage } from "./helpers";
+import AxeBuilder from "@axe-core/playwright";
 
 test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
   await page.goto(getDevDomain());
 
-  const h1 = page.locator("h1").first();
-  await expect(h1).toBeVisible();
+  try {
+    const h1 = page.locator("h1").first();
+    await expect(h1, "Page load failed").toBeVisible();
+  } catch (e) {
+    throw new Error(`${e.message.split("\n")[0]}`);
+  }
+});
+
+test("Check accessibility on pages", async ({ page }) => {
+  test.setTimeout(10 * 60 * 1000); // 10 minute timeout
+  await getLoggedInPage(page);
+  const baseUrl = getDevDomain();
+  const visitedUrls = new Set();
+  const urlsToVisit = new Set([baseUrl]);
+  const accessibilityIssues = {};
+  const maxPagesToCheck = 500; // Limit to 500 pages
+
+  const additionalPages = ["/bedrift", "/min-side"];
+  additionalPages.forEach((pagePath) => {
+    const fullUrl = new URL(pagePath, baseUrl).toString();
+    urlsToVisit.add(fullUrl);
+  });
+
+  const checkAccessibility = async (url) => {
+    if (visitedUrls.has(url) || visitedUrls.size >= maxPagesToCheck) return;
+
+    console.log(`Checking: ${url}`);
+    await page.waitForTimeout(2000);
+    await page.goto(url);
+    visitedUrls.add(url);
+
+    // Check for h1
+    try {
+      const h1 = page.locator("h1").first();
+      await expect(h1).toBeVisible({ timeout: 10000 });
+    } catch (e) {
+      throw new Error(`No h1 found on ${url}`);
+    }
+
+    // Check accessibility
+    try {
+      const accessibilityScanResults = await new AxeBuilder({ page })
+        .exclude(".arb-skip-link")
+        .analyze();
+
+      if (accessibilityScanResults.violations.length > 0) {
+        accessibilityIssues[url] = accessibilityScanResults.violations;
+      }
+    } catch (e) {
+      console.error(`Accessibility check failed for ${url}:`, e);
+    }
+
+    // Only collect more links if we haven't reached the limit
+    if (visitedUrls.size < maxPagesToCheck) {
+      const links = await page.$$eval(
+        "a[href]",
+        (anchors, base) =>
+          anchors
+            .map((anchor) => anchor.href)
+            .filter((href) => {
+              // Skip if href is empty
+              if (!href) return false;
+
+              // Skip external domains
+              if (!href.startsWith(base)) return false;
+
+              // Skip specific paths
+              const excludedPaths = [
+                "/stillinger/stilling",
+                "/stillingsregistrering",
+                "/cv",
+                "/oauth2",
+              ];
+
+              if (excludedPaths.some((path) => href.includes(path))) {
+                return false;
+              }
+
+              // Skip anchors, mailto, and tel links
+              if (
+                href.includes("#") ||
+                href.includes("mailto:") ||
+                href.includes("tel:")
+              ) {
+                return false;
+              }
+
+              return true;
+            }),
+        baseUrl
+      );
+
+      for (const link of links) {
+        if (visitedUrls.size >= maxPagesToCheck) break;
+        if (!visitedUrls.has(link) && !urlsToVisit.has(link)) {
+          urlsToVisit.add(link);
+        }
+      }
+    }
+  };
+
+  while (urlsToVisit.size > 0 && visitedUrls.size < maxPagesToCheck) {
+    const [nextUrl] = urlsToVisit;
+    await checkAccessibility(nextUrl);
+    urlsToVisit.delete(nextUrl);
+  }
+
+  // Log all accessibility issues found
+  const issueCount = Object.keys(accessibilityIssues).length;
+  if (issueCount > 0) {
+    const errorDetails = Object.entries(accessibilityIssues)
+      .map(
+        ([url, issues]) =>
+          `URL: ${url}\n` +
+          issues
+            .map((issue) => `- ${issue.description} (${issue.helpUrl})`)
+            .join("\n")
+      )
+      .join("\n\n");
+
+    throw new Error(
+      `Found ${issueCount} accessibility issues:\n\n${errorDetails}`
+    );
+  }
 });
 
 test("Favorites are working in DEV", async ({ page }) => {

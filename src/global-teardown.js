@@ -14,7 +14,7 @@ export default async function globalTeardown() {
       .map(
         (test, index) =>
           `${index + 1}. [${test.projectName || "unknown"}] ${test.title}\n   ${
-            test.error.split("\n")[0]
+            test.error
           }`
       )
       .join("\n\n");

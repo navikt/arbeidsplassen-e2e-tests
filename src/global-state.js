@@ -3,7 +3,7 @@ const failedTests = [];
 export function addFailedTest(testInfo) {
   failedTests.push({
     title: testInfo.title,
-    error: testInfo.error?.message || "Test failed",
+    error: testInfo.error || "Test failed",
     projectName: testInfo.projectName || "unknown",
   });
 }
