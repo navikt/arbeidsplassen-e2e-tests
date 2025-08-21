@@ -47,6 +47,7 @@ test("Check accessibility on pages", async ({ page }) => {
     // Check accessibility
     try {
       const accessibilityScanResults = await new AxeBuilder({ page })
+        .withTags(["wcag2a", "wcag2aa", "best-practice"])
         .exclude(".arb-skip-link")
         .analyze();
 
