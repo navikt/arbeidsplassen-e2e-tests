@@ -3,6 +3,9 @@ on:
   push:
     branches:
       - main
+    paths-ignore:
+      - '*.md'
+      - 'tests/prod-uptest.spec.js'
 
 jobs:
   build_and_deploy:
