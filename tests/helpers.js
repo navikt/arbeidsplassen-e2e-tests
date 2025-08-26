@@ -5,7 +5,10 @@ const PROD_DOMAIN = "https://arbeidsplassen.nav.no";
 const LOCAL_DOMAIN = "http://localhost:3000";
 
 export const getLoggedInPage = async (page) => {
-  await page.goto("https://arbeidsplassen.intern.dev.nav.no/");
+  await page.goto("https://arbeidsplassen.intern.dev.nav.no", {
+    waitUntil: "domcontentloaded",
+  });
+  await page.waitForLoadState("networkidle");
 
   const login = page.locator("button", { hasText: "Logg inn" }).first();
   await login.click();

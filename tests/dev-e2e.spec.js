@@ -167,7 +167,7 @@ test("Favorites are working in DEV", async ({ page }) => {
 
   const firstJobAdFavoritesButton = firstJobAd.locator("button");
   await expect(firstJobAdFavoritesButton).toBeVisible({ timeout: 10000 });
-  await page.waitForTimeout(2000);
+  await loggedInPage.waitForTimeout(2000);
 
   const currentAriaLabel = await firstJobAdFavoritesButton.getAttribute(
     "aria-label"
@@ -176,7 +176,8 @@ test("Favorites are working in DEV", async ({ page }) => {
   // If it already is favorited, remove it before adding again
   if (currentAriaLabel === "Lagret") {
     await firstJobAdFavoritesButton.click();
-    await page.waitForTimeout(2000);
+    await loggedInPage.waitForLoadState("networkidle");
+    await loggedInPage.waitForTimeout(2000);
     await expect(firstJobAdFavoritesButton).toHaveAttribute(
       "aria-label",
       "Lagre",
@@ -185,7 +186,8 @@ test("Favorites are working in DEV", async ({ page }) => {
   }
 
   await firstJobAdFavoritesButton.click();
-  await page.waitForTimeout(2000);
+  await loggedInPage.waitForTimeout(2000);
+  await loggedInPage.waitForLoadState("networkidle");
 
   await expect(firstJobAdFavoritesButton).toHaveAttribute(
     "aria-label",
@@ -194,7 +196,10 @@ test("Favorites are working in DEV", async ({ page }) => {
   );
 
   //Check that the favorite exists on the favorites page
-  await page.goto(getDevDomain() + "/stillinger/favoritter");
+  await page.goto(getDevDomain() + "/stillinger/favoritter", {
+    waitUntil: "domcontentloaded",
+  });
+  await page.waitForLoadState("networkidle");
 
   const h1 = page.locator("h1").first();
   await expect(h1).toBeVisible({ timeout: 10000 });
