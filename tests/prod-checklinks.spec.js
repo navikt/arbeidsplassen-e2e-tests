@@ -50,7 +50,6 @@ test("Check links on pages", async ({ page }) => {
   test.setTimeout(10 * 60 * 1000); // 10 minute timeout
   const baseUrl = getProdDomain();
 
-  throw new Error(`TESTING SLACK TOKEN IN GITHUB`);
   const visitedUrls = new Set();
   const urlsToVisit = new Set([baseUrl]);
   const linkIssues = {};
