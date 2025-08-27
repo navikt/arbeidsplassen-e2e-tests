@@ -6,6 +6,9 @@ on:
     paths-ignore:
       - '*.md'
       - 'tests/prod-uptest.spec.js'
+      - 'tests/prod-checklinks.spec.js'
+      - '.github/workflows/deploy-dev-e2e-tests.yml'
+      - '.github/workflows/deploy-prod-checklinks-tests.yml'
 
 jobs:
   build_and_deploy:
