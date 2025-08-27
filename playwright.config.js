@@ -19,7 +19,7 @@ export default defineConfig({
   },
   fullyParallel: false, // Don`t run tests in parallel
   forbidOnly: !!process.env.CI, // Fail the build on CI if you accidentally left test.only in the source code
-  retries: process.env.CI ? 2 : 0, // Retry on CI only
+  retries: process.env.CI ? 1 : 0, // Retry on CI only
   workers: 1,
   reporter: [
     ["html", { outputFolder: "playwright-report", open: "never" }],
