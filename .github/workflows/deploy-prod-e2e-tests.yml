@@ -8,7 +8,7 @@ on:
       - 'tests/dev-e2e.spec.js'
       - 'tests/prod-checklinks.spec.js'
       - '.github/workflows/deploy-prod-e2e-tests.yml'
-      - '.github/workflows/prod-checklinks-tests.yml'
+      - '.github/workflows/prod-checklinks.yml'
 
 jobs:
   build_and_deploy:
