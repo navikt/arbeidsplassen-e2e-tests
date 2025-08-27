@@ -48,9 +48,8 @@ async function validateLink(link, page) {
 
 test("Check links on pages", async ({ page }) => {
   test.setTimeout(10 * 60 * 1000); // 10 minute timeout
-  await getLoggedInPage(page);
   const baseUrl = getProdDomain();
-  //   const baseUrl = getLocalDomain();
+
   const visitedUrls = new Set();
   const urlsToVisit = new Set([baseUrl]);
   const linkIssues = {};
