@@ -48,13 +48,13 @@ async function validateLink(link, page) {
 }
 
 test("Check links on pages", async ({ page }) => {
-  test.setTimeout(10 * 60 * 1000); // 10 minute timeout
+  test.setTimeout(30 * 60 * 1000); // 30 minute timeout
   const baseUrl = getProdDomain();
 
   const visitedUrls = new Set();
   const urlsToVisit = new Set([baseUrl]);
   const linkIssues = {};
-  const maxPagesToCheck = 500; // Limit to 500 pages
+  const maxPagesToCheck = 1000; // Limit to 1000 pages
 
   await validateLink(baseUrl, page);
 
@@ -68,12 +68,12 @@ test("Check links on pages", async ({ page }) => {
     if (visitedUrls.has(url) || visitedUrls.size >= maxPagesToCheck) return;
 
     const isSameDomain = new URL(url).hostname === new URL(baseUrl).hostname;
+    visitedUrls.add(url);
     if (isSameDomain && visitedUrls.size < maxPagesToCheck) {
       console.log(`Checking: ${url}`);
       await page.waitForTimeout(1500);
       await page.goto(url, { waitUntil: "domcontentloaded" });
       await page.waitForLoadState("networkidle");
-      visitedUrls.add(url);
 
       // Always validate the current URL
       const validationError = await validateLink(url, page);
