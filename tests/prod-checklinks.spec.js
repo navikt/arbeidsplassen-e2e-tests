@@ -54,6 +54,7 @@ test("Check links on pages", async ({ page }) => {
   const visitedUrls = new Set();
   const urlsToVisit = new Set([baseUrl]);
   const linkIssues = {};
+  const validatedExternalLinks = new Set(); // Track validated external links
   const maxPagesToCheck = 1000; // Limit to 1000 pages
 
   await validateLink(baseUrl, page);
@@ -123,25 +124,28 @@ test("Check links on pages", async ({ page }) => {
       for (const link of links) {
         if (visitedUrls.size >= maxPagesToCheck) break;
         const linkUrl = new URL(link);
-        // Only add to visit queue if it's the same domain
-        if (linkUrl.hostname === new URL(baseUrl).hostname) {
-          if (!visitedUrls.has(link) && !urlsToVisit.has(link)) {
+        // Only process if we haven't seen this URL before and it's not already queued
+        if (!visitedUrls.has(link) && !urlsToVisit.has(link)) {
+          // Only add to visit queue if it's the same domain
+          if (linkUrl.hostname === new URL(baseUrl).hostname) {
             urlsToVisit.add(link);
-          }
-        } else {
-          // Validate external links but don't follow them
-          try {
-            const error = await validateLink(link, page);
-            if (error) {
-              console.error(`Broken external link found on ${url}: ${link}`);
-              linkIssues[
-                url
-              ] = `Broken external link found on ${url} -> ${link}`;
-            } else {
-              console.log(`VALID: ${link}`);
+          } else if (!validatedExternalLinks.has(link)) {
+            // Only validate external links we haven't seen
+            // Validate external links but don't follow them
+            try {
+              const error = await validateLink(link, page);
+              validatedExternalLinks.add(link); // Mark this external link as validated
+              if (error) {
+                console.error(`Broken external link found on ${url}: ${link}`);
+                linkIssues[
+                  url
+                ] = `Broken external link found on ${url} -> ${link}`;
+              } else {
+                console.log(`VALID: ${link}`);
+              }
+            } catch (err) {
+              console.error(`Error validating external link ${link}:`, err);
             }
-          } catch (err) {
-            console.error(`Error validating external link ${link}:`, err);
           }
         }
       }
