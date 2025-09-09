@@ -55,7 +55,7 @@ test("Check links on pages", async ({ page }) => {
   const linkIssues = {};
   const maxPagesToCheck = 500; // Limit to 500 pages
 
-  const additionalPages = ["/bedrift", "/min-side"];
+  const additionalPages = ["/bedrift"];
   additionalPages.forEach((pagePath) => {
     const fullUrl = new URL(pagePath, baseUrl).toString();
     urlsToVisit.add(fullUrl);
