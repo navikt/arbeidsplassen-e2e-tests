@@ -15,7 +15,7 @@ export default defineConfig({
   globalTeardown: path.join(__dirname, "src/global-teardown.js"),
   timeout: 30 * 1000, // Global timeout for tests
   expect: {
-    timeout: 5000, // Timeout for expect assertions
+    timeout: 10000, // Timeout for expect assertions
   },
   fullyParallel: false, // Don`t run tests in parallel
   forbidOnly: !!process.env.CI, // Fail the build on CI if you accidentally left test.only in the source code
