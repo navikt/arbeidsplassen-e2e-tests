@@ -31,7 +31,7 @@ async function validateLink(link, page) {
           `Rate limit hit for ${link} - try ${tries}, retrying after delay`
         );
         // eslint-disable-next-line no-await-in-loop
-        await randomDelay(1000, 1000); // Vent 1 sekund og prøv igjen
+        await randomDelay(1000, 10000); // Vent 1 sekund og prøv igjen
       } else if (response?.status() < 400 || response?.status() === 401) {
         return null;
       } else {
@@ -64,23 +64,23 @@ test("Check links on pages", async ({ page }) => {
   const checkLinks = async (url) => {
     if (visitedUrls.has(url) || visitedUrls.size >= maxPagesToCheck) return;
 
-    console.log(`Checking: ${url}`);
-    await page.waitForTimeout(500);
-    await page.goto(url, { waitUntil: "domcontentloaded" });
-    await page.waitForLoadState("networkidle");
-    visitedUrls.add(url);
-
-    // Always validate the current URL
-    const validationError = await validateLink(url, page);
-    if (validationError) {
-      console.error(`Broken link found on: ${page.url()} ${url}`);
-
-      linkIssues[url] = `Broken link found on ${url} -> ${page.url()}`;
-    }
-
-    // Only collect more links if we haven't reached the limit and this is our domain
     const isSameDomain = new URL(url).hostname === new URL(baseUrl).hostname;
     if (isSameDomain && visitedUrls.size < maxPagesToCheck) {
+      console.log(`Checking: ${url}`);
+      await page.waitForTimeout(1500);
+      await page.goto(url, { waitUntil: "domcontentloaded" });
+      await page.waitForLoadState("networkidle");
+      visitedUrls.add(url);
+
+      // Always validate the current URL
+      const validationError = await validateLink(url, page);
+      if (validationError) {
+        console.error(`Broken link found on: ${page.url()} ${url}`);
+
+        linkIssues[url] = `Broken link found on ${url} -> ${page.url()}`;
+      }
+
+      // Only collect more links if we haven't reached the limit and this is our domain
       const links = await page.$$eval(
         "a[href]",
         (anchors, base) =>
@@ -127,15 +127,33 @@ test("Check links on pages", async ({ page }) => {
           }
         } else {
           // Validate external links but don't follow them
-          validateLink(link, page).then((error) => {
+          try {
+            const error = await validateLink(link, page);
             if (error) {
               console.error(`Broken external link found on ${url}: ${link}`);
               linkIssues[
                 url
               ] = `Broken external link found on ${url} -> ${link}`;
+            } else {
+              console.log(`VALID: ${link}`);
             }
-          });
+          } catch (err) {
+            console.error(`Error validating external link ${link}:`, err);
+          }
         }
+      }
+    } else {
+      // Validate external links but don't follow them
+      try {
+        const error = await validateLink(url, page);
+        if (error) {
+          console.error(`Broken external link found on ${url}: ${url}`);
+          linkIssues[url] = `Broken external link found on ${url} -> ${url}`;
+        } else {
+          console.log(`VALID: ${url}`);
+        }
+      } catch (err) {
+        console.error(`Error validating external link ${url}:`, err);
       }
     }
   };
