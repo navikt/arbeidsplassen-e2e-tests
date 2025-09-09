@@ -54,7 +54,7 @@ test("Check links on pages", async ({ page }) => {
   test.setTimeout(10 * 60 * 1000); // 10 minute timeout
   // const baseUrl = getProdDomain();
   const baseUrl =
-    "https://uustatus.no/nb/erklaringer/publisert/9f7beaf9-ea64-4a93-8e20-8282f8fd1fce";
+    "https://eid.difi.no/nb/id-porten/slik-skaffer-du-deg-elektronisk-id";
 
   const visitedUrls = new Set();
   const urlsToVisit = new Set([baseUrl]);
