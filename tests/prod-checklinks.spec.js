@@ -25,9 +25,6 @@ async function validateLink(link, page) {
         },
         timeout: 20000, // 20 second timeout
       }); // equivalent to command "curl -I <link>"
-      if (response) {
-        console.log("R", response);
-      }
 
       if (response?.status() === 429) {
         console.warn(
