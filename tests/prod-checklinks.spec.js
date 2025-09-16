@@ -47,7 +47,92 @@ async function validateLink(link, page) {
   return link;
 }
 
-test("Check links on pages", async ({ page }) => {
+async function validateHtmlWithW3C(page, url) {
+  const maxRetries = 3;
+  let lastError;
+
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(
+        `Validating HTML for: ${url} (Attempt ${attempt}/${maxRetries})`
+      );
+
+      const html = await page.content();
+
+      const validatorUrl = "https://validator.w3.org/nu/?out=json";
+      const response = await fetch(validatorUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
+        },
+        body: html,
+      });
+
+      const result = await response.json();
+      let hasErrors = false;
+
+      if (result.messages && result.messages.length > 0) {
+        const errors = result.messages.filter((msg) => msg.type === "error");
+        const warnings = result.messages.filter(
+          (msg) => msg.type === "warning"
+        );
+
+        if (errors.length > 0) {
+          console.error(
+            `❌ Found ${errors.length} HTML validation errors on ${url}:`
+          );
+          errors.forEach((error, index) => {
+            console.error(
+              `  ${index + 1}. [Line ${error.lastLine || "?"}, Col ${
+                error.lastColumn || "?"
+              }] ${error.message}`
+            );
+            if (error.extract) {
+              console.error(`     ${error.extract.trim()}`);
+            }
+          });
+          hasErrors = true;
+        }
+
+        if (warnings.length > 0) {
+          console.warn(
+            `⚠️  Found ${warnings.length} HTML validation warnings on ${url}`
+          );
+          warnings.forEach((warning, index) => {
+            console.warn(`  ${index + 1}. ${warning.message}`);
+            if (warning.extract) {
+              console.warn(`     ${warning.extract.trim()}`);
+            }
+          });
+        }
+      }
+
+      // Return whether we found any validation errors
+      return { hasErrors };
+    } catch (error) {
+      lastError = error;
+      console.warn(`Attempt ${attempt} failed: ${error.message}`);
+
+      if (attempt < maxRetries) {
+        const delay = Math.floor(Math.random() * 9000) + 1000; // 1-10 seconds
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      } else {
+        console.error(
+          `❌ HTML validation failed after ${maxRetries} attempts for ${url}:`,
+          lastError
+        );
+        throw lastError; // Only throw for network errors, not validation errors
+      }
+    }
+  }
+}
+
+test("Check internal links, external links and validate HTML on internal pages.", async ({
+  page,
+}) => {
   test.setTimeout(30 * 60 * 1000); // 30 minute timeout
   const baseUrl = getProdDomain();
 
@@ -90,6 +175,18 @@ test("Check links on pages", async ({ page }) => {
 
           await page.goto(url, { waitUntil: "domcontentloaded" });
           await page.waitForLoadState("networkidle");
+
+          // Add W3C HTML validation
+          try {
+            const { hasErrors } = await validateHtmlWithW3C(page, url);
+            if (hasErrors) {
+              linkIssues[url] = `HTML validation failed for ${url}`;
+            }
+          } catch (error) {
+            // Only throw for network errors, not validation errors
+            throw error;
+          }
+
           lastError = null;
           break; // Success - exit retry loop
         } catch (error) {
@@ -208,6 +305,6 @@ test("Check links on pages", async ({ page }) => {
   const issueCount = Object.keys(linkIssues).length;
   if (issueCount > 0) {
     const errorMessages = Object.values(linkIssues).join("\n");
-    throw new Error(`Found ${issueCount} broken links:\n\n${errorMessages}`);
+    throw new Error(`Found ${issueCount} errors:\n\n${errorMessages}`);
   }
 });
