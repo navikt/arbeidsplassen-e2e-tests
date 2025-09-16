@@ -72,9 +72,42 @@ test("Check links on pages", async ({ page }) => {
     visitedUrls.add(url);
     if (isSameDomain && visitedUrls.size < maxPagesToCheck) {
       console.log(`Checking: ${url}`);
-      await page.waitForTimeout(1500);
-      await page.goto(url, { waitUntil: "domcontentloaded" });
-      await page.waitForLoadState("networkidle");
+
+      const maxRetries = 3;
+      const minDelay = 1000; // 1 second
+      const maxDelay = 10000; // 10 seconds
+      let lastError;
+
+      for (let attempt = 1; attempt <= maxRetries; attempt++) {
+        try {
+          // Add random delay between retries (but not before first attempt)
+          if (attempt > 1) {
+            const delay =
+              Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
+            console.log(`Retry attempt ${attempt} after ${delay}ms delay...`);
+            await page.waitForTimeout(delay);
+          }
+
+          await page.goto(url, { waitUntil: "domcontentloaded" });
+          await page.waitForLoadState("networkidle");
+          lastError = null;
+          break; // Success - exit retry loop
+        } catch (error) {
+          lastError = error;
+          if (attempt === maxRetries) {
+            console.error(
+              `Failed after ${maxRetries} attempts for ${url}:`,
+              error.message
+            );
+          } else {
+            console.log(`Attempt ${attempt} failed: ${error.message}`);
+          }
+        }
+      }
+
+      if (lastError) {
+        throw lastError; // Re-throw the last error if all retries failed
+      }
 
       // Always validate the current URL
       const validationError = await validateLink(url, page);
