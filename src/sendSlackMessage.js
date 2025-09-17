@@ -18,6 +18,8 @@ async function sendSlackMessage(message) {
     body: JSON.stringify({
       channel: CHANNEL,
       text: message,
+      unfurl_links: false,
+      unfurl_media: false,
     }),
   });
 
