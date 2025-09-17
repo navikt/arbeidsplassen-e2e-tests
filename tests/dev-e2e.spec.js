@@ -40,7 +40,7 @@ test("Check accessibility on pages", async ({ page }) => {
     // Check for h1 with retries
     let h1Found = false;
 
-    for (let attempt = 1; attempt <= 10; attempt++) {
+    for (let attempt = 1; attempt <= 5; attempt++) {
       try {
         const h1 = page.locator("h1").first();
         await expect(h1).toBeVisible({ timeout: 10000 });

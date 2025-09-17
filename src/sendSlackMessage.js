@@ -8,6 +8,9 @@ async function sendSlackMessage(message) {
     console.error(message);
     return;
   }
+  console.log("Sending message to ", CHANNEL);
+  console.log(message);
+  console.log("END message");
 
   const res = await fetch("https://slack.com/api/chat.postMessage", {
     method: "POST",
