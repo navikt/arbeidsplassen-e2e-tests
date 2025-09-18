@@ -1,5 +1,7 @@
 name: Build and deploy dev-e2e-tests
 on:
+  schedule:
+    - cron: '0 0 * * *' 
   push:
     branches:
       - main
