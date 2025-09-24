@@ -40,7 +40,11 @@ test("/stillinger is working in PROD and count is above 0", async ({
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     try {
-      await page.goto(getProdDomain() + "/stillinger");
+      await page.goto(getProdDomain() + "/stillinger", {
+        waitUntil: "domcontentloaded",
+      });
+      await page.waitForLoadState("networkidle");
+      await page.waitForTimeout(1000);
 
       const h2 = page.locator("h2", { hasText: "treff" }).first();
       await expect(h2).toHaveText(/[\d\s]+.*treff/i, { timeout: 10000 });
