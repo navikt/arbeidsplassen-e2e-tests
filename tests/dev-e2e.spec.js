@@ -163,7 +163,7 @@ test("Favorites are working in DEV", async ({ page }) => {
   const firstJobAd = loggedInPage.locator("article").first();
   await expect(firstJobAd).toBeVisible({ timeout: 10000 });
 
-  const firstJobAdHeading = await firstJobAd.locator("h2").textContent();
+  const firstJobAdHref = await firstJobAd.locator("h2 a").getAttribute("href");
 
   const firstJobAdFavoritesButton = firstJobAd.locator("button");
   await expect(firstJobAdFavoritesButton).toBeVisible({ timeout: 10000 });
@@ -205,7 +205,7 @@ test("Favorites are working in DEV", async ({ page }) => {
   await expect(h1).toBeVisible({ timeout: 10000 });
 
   const matchingFavorite = page.locator("article", {
-    has: page.locator(`a`, { hasText: firstJobAdHeading?.trim() || "" }),
+    has: page.locator(`a[href$="${firstJobAdHref}"]`),
   });
 
   await expect(matchingFavorite).toBeVisible({ timeout: 10000 });
