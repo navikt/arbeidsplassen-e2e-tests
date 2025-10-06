@@ -180,7 +180,13 @@ test("Check internal links, external links and validate HTML on internal pages."
           try {
             const { hasErrors } = await validateHtmlWithW3C(page, url);
             if (hasErrors) {
-              linkIssues[url] = `HTML validation failed for ${url}`;
+              if (Object.keys(linkIssues).length < 10) {
+                linkIssues[url] = `HTML validation failed for ${url}`;
+              } else if (Object.keys(linkIssues).length === 10) {
+                linkIssues[
+                  url
+                ] = `HTML validation failed for ${url} \n\nFound more than pages with validation errors, only showing first 10`;
+              }
             }
           } catch (error) {
             // Only throw for network errors, not validation errors
