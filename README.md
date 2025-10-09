@@ -49,3 +49,7 @@ Sjekker at arbeidsplassen.nav.no/stillinger laster, og gir fler enn 0 treff.
 
 Sjekker at alle linker er gyldige, men sjekker ikke lenker i stillingsannonser. Dette er en test man potensielt kan droppe, da denne dataen finnes i SiteImprove.<br>
 Validerer HTML mot W3C.
+
+#### TODO:
+
+Akkurat nå kjøres dev-e2e testene en gang ved midnatt. Denne bør hektes på GitHub workflow så den kjører ved merge til master i pam-stillingsok.
