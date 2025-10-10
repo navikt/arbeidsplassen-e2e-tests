@@ -32,6 +32,7 @@ jobs:
         id: docker-build-push
         with:
           team: arbeidsplassen
+          name: arbeidsplassen-e2e-tests 
       - name: Deploy to Nais
         uses: nais/deploy/actions/deploy@v2
         env:
