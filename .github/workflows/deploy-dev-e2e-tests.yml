@@ -25,6 +25,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          repository: navikt/arbeidsplassen-e2e-tests
           fetch-depth: 0
       - name: Build and push
         uses: nais/docker-build-push@v0
