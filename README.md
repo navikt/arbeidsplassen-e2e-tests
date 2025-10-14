@@ -37,7 +37,7 @@ GitHub: [https://github.com/navikt/arbeidsplassen-e2e-tests/actions](https://git
 
 #### dev-e2e (dev-miljø, logger finnes i Nais)
 
-Kjører sjekk av universell utforming med: [https://www.npmjs.com/package/@axe-core/playwright](https://www.npmjs.com/package/@axe-core/playwright)<br>
+Kjøes ved merge til master i `pam-stillingsok`. Kjører sjekk av universell utforming med: [https://www.npmjs.com/package/@axe-core/playwright](https://www.npmjs.com/package/@axe-core/playwright)<br>
 Kjører sjekk av favoritter, ved å logge inn, lagre en favoritt, så sjekke at denne finnes på siden for favoritter.
 
 #### prod-uptest (prod-miljø, logger finnes i GitHub)
@@ -50,6 +50,13 @@ Sjekker at arbeidsplassen.nav.no/stillinger laster, og gir fler enn 0 treff.
 Sjekker at alle linker er gyldige, men sjekker ikke lenker i stillingsannonser. Dette er en test man potensielt kan droppe, da denne dataen finnes i SiteImprove.<br>
 Validerer HTML mot W3C.
 
-#### TODO:
+### Universell utforming
 
-Akkurat nå kjøres dev-e2e testene en gang ved midnatt. Denne bør hektes på GitHub workflow så den kjører ved merge til master i pam-stillingsok.
+Følgende krav blir testet automatisk, og trengs i hovedsak ikke testes når tilgjengelighetsrapporten skrives.
+
+- 1.1.1 alt-tagger på bilder sjekkes.
+- 2.4.2 Sjekker at den finnes, men ikke om den er god og beskrivende for bruker.
+- 2.4.6 Overskriftnivåer sjekkes automatisk.
+- 3.1.1 Språk på siden. Sjekker at det finnes, dog ikke om den har riktig kode. `lang="no"` osv.
+- 3.3.2 Ledetekster til skjemaelementer sjekkes automatisk.
+- 4.1.1 Parsing. HTMLen blir validert automatisk på åpne sider, så innloggede sider trenger en liten sjekk.
