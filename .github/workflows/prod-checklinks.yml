@@ -40,6 +40,7 @@ jobs:
       env:
         HOME: /root
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+        SLACK_ALERTS_ENABLED: ${{ secrets.SLACK_ALERTS_ENABLED }}
       run: npx playwright test prod-checklinks
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
