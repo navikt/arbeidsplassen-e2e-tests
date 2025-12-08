@@ -41,6 +41,7 @@ jobs:
         HOME: /root
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         SLACK_ALERTS_ENABLED: ${{ secrets.SLACK_ALERTS_ENABLED }}
+        NAIS_JOBS_URL: "https://console.nav.cloud.nais.io/team/arbeidsplassen/jobs"
       run: npx playwright test prod-checklinks
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}

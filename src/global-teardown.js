@@ -51,6 +51,27 @@ function parseError(error) {
   };
 }
 
+function getCiLinks() {
+  const links = [];
+
+  // GitHub Actions (disse env-ene settes automatisk i GitHub)
+  const githubRepository = process.env.GITHUB_REPOSITORY;
+  const githubRunId = process.env.GITHUB_RUN_ID;
+
+  if (githubRepository && githubRunId) {
+    const githubUrl = `https://github.com/${githubRepository}/actions/runs/${githubRunId}`;
+    links.push(`<${githubUrl}|GitHub Actions>`);
+  }
+
+  // NAIS – la workflowen sette denne eksplisitt
+  const naisJobsUrl = process.env.NAIS_JOBS_URL;
+  if (naisJobsUrl) {
+    links.push(`<${naisJobsUrl}|NAIS jobber>`);
+  }
+
+  return links;
+}
+
 function buildBlocksForFailedTests(failedTests) {
   const uniqueFailedTests = dedupeFailedTests(failedTests).slice(
       0,
@@ -126,15 +147,23 @@ function buildBlocksForFailedTests(failedTests) {
     });
   });
 
+  const ciLinks = getCiLinks();
+  const contextElements = [
+    {
+      type: "mrkdwn",
+      text: "_Mer informasjon om tester som feiler finnes i CI-loggene._",
+    },
+  ];
+  if (ciLinks.length > 0) {
+    contextElements.push({
+      type: "mrkdwn",
+      text: `• ${ciLinks.join(" • ")}`,
+    });
+  }
+
   blocks.push({
     type: "context",
-    elements: [
-      {
-        type: "mrkdwn",
-        text:
-            "_Se CI-loggene for detaljer fra HTML-validator / Playwright._",
-      },
-    ],
+    elements: contextElements,
   });
 
   return {
