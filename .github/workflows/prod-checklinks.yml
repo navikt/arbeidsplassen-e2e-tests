@@ -53,7 +53,7 @@ jobs:
         HOME: /root
         HTML_VALIDATOR_URL: "http://localhost:8888/?out=json"
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
-        SLACK_ALERTS_ENABLED: ${{ secrets.SLACK_ALERTS_ENABLED }}
+        SLACK_ALERTS_ENABLED: true
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_RUN_ID: ${{ github.run_id }}
         NAIS_JOBS_URL: "https://console.nav.cloud.nais.io/team/arbeidsplassen/jobs"
