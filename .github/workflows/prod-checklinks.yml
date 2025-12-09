@@ -19,6 +19,11 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: mcr.microsoft.com/playwright:v1.48.1-noble
+    services:
+      nu-html-checker:
+        image: ghcr.io/validator/validator:latest
+        ports:
+          - 8888:8888
     steps:
     - uses: actions/checkout@v4
     - uses: actions/setup-node@v4
@@ -34,33 +39,18 @@ jobs:
         npm config set @navikt:registry https://npm.pkg.github.com
         npm config set //npm.pkg.github.com/:_authToken $NPM_AUTH_TOKEN
         npm ci --prefer-offline --no-audit --ignore-scripts
-    - name: Start Nu HTML Checker (v.Nu)
-      run: |
-        docker run -d --name nu-html-checker -p 8888:8888 ghcr.io/validator/validator:latest
-        # Vent til den svarer
-        for i in {1..20}; do
-          if curl -sSf "http://localhost:8888" >/dev/null 2>&1; then
-            echo "Nu HTML Checker is up!"
-            break
-          fi
-          echo "Waiting for Nu HTML Checker..."
-          sleep 3
-        done
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
       env:
         HOME: /root
-        HTML_VALIDATOR_URL: "http://localhost:8888/?out=json"
+        HTML_VALIDATOR_URL: "http://nu-html-checker:8888/?out=json"
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         SLACK_ALERTS_ENABLED: true
         GITHUB_REPOSITORY: ${{ github.repository }}
         GITHUB_RUN_ID: ${{ github.run_id }}
         NAIS_JOBS_URL: "https://console.nav.cloud.nais.io/team/arbeidsplassen/jobs"
       run: npx playwright test prod-checklinks
-    - name: Stop Nu HTML Checker
-      if: always()
-      run: docker stop nu-html-checker || true
     - uses: actions/upload-artifact@v4
       if: ${{ !cancelled() }}
       with:
