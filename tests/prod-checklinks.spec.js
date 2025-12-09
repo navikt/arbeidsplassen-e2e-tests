@@ -46,9 +46,9 @@ async function validateLink(link, page) {
   return link;
 }
 
-const MAX_HTML_VALIDATIONS_PER_RUN = 10;
-let htmlValidationCount = 0;
 let w3cRateLimited = false; // global flagg for denne test-runden
+const HTML_VALIDATOR_URL =
+    process.env.HTML_VALIDATOR_URL;
 
 async function validateHtmlWithW3C(page, url) {
   // Hvis vi allerede har fått 429 tidligere i denne runnen, skipper vi resten
@@ -59,24 +59,14 @@ async function validateHtmlWithW3C(page, url) {
     return { hasErrors: false, skipped: true };
   }
 
-  if (htmlValidationCount >= MAX_HTML_VALIDATIONS_PER_RUN) {
-    console.log(
-        `[HTML] Skipper W3C-validering for ${url} – har allerede validert ${htmlValidationCount} sider i denne runden.`,
-    );
-    return { hasErrors: false, skipped: true };
-  }
-
-  htmlValidationCount += 1;
-
   try {
     console.log(
-        `[HTML] Validerer HTML for: ${url} (${htmlValidationCount}/${MAX_HTML_VALIDATIONS_PER_RUN})`,
+        `[HTML] Validerer HTML for: ${url}`,
     );
 
     const html = await page.content();
 
-    const validatorUrl = "https://validator.w3.org/nu/?out=json";
-    const response = await fetch(validatorUrl, {
+    const response = await fetch(HTML_VALIDATOR_URL, {
       method: "POST",
       headers: {
         "Content-Type": "text/html; charset=utf-8",
