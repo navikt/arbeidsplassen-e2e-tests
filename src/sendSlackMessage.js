@@ -5,7 +5,7 @@ const CHANNEL = "#team-arbeidsplassen_no-alerts";
 const ENABLE_SLACK_ALERTS = process.env.SLACK_ALERTS_ENABLED === "true";
 
 /**
- * @param {string | { text: string; blocks?: unknown[] }} payload
+ * @param {string | { text: string; blocks?: unknown[]; attachments?: unknown[] }} payload
  */
 async function sendSlackMessage(payload) {
 

@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { getDevDomain, getLocalDomain, getLoggedInPage } from "./helpers";
+import { getDevDomain, getLoggedInPage } from "./helpers";
 import AxeBuilder from "@axe-core/playwright";
 
 test("Verify Arbeidsplassen DEV homepage loads", async ({ page }) => {
@@ -58,6 +58,11 @@ test("Check accessibility on pages", async ({ page }) => {
 
     if (!h1Found) {
       console.error("No h1 found");
+      accessibilityIssues[url] = (accessibilityIssues[url] || []);
+      accessibilityIssues[url].push({
+        description: "No visible <h1> found on page",
+        helpUrl: "https://www.w3.org/TR/WCAG21/#page-titled",
+      });
     }
 
     // Check accessibility

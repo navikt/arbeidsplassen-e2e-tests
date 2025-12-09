@@ -8,7 +8,7 @@ function dedupeFailedTests(failedTests) {
 
   for (const test of failedTests) {
     const key = `${test.projectName || "unknown"}::${test.title}::${String(
-        test.error ?? ""
+        test.error ?? "",
     )}`;
 
     if (!uniqueMap.has(key)) {
@@ -54,7 +54,6 @@ function parseError(error) {
 function getCiLinks() {
   const links = [];
 
-  // GitHub Actions (disse env-ene settes automatisk i GitHub)
   const githubRepository = process.env.GITHUB_REPOSITORY;
   const githubRunId = process.env.GITHUB_RUN_ID;
 
@@ -63,7 +62,6 @@ function getCiLinks() {
     links.push(`<${githubUrl}|GitHub Actions>`);
   }
 
-  // NAIS – la workflowen sette denne eksplisitt
   const naisJobsUrl = process.env.NAIS_JOBS_URL;
   if (naisJobsUrl) {
     links.push(`<${naisJobsUrl}|NAIS jobber>`);
@@ -75,19 +73,23 @@ function getCiLinks() {
 function buildBlocksForFailedTests(failedTests) {
   const uniqueFailedTests = dedupeFailedTests(failedTests).slice(
       0,
-      MAX_TESTS_IN_MESSAGE
+      MAX_TESTS_IN_MESSAGE,
   );
 
   const browserNames = new Set(
-      uniqueFailedTests.map((t) => t.projectName || "unknown")
+      uniqueFailedTests.map((t) => t.projectName || "unknown"),
   );
 
   const headerText = "❌ Arbeidsplassen E2E – tester feilet";
 
-  /** @type {Array<import("@slack/web-api").KnownBlock | any>} */
+  const severity = "Warning";
+  // Bruk eksplisitt hex-farge for å være sikker på at Slack faktisk farger stripen
+  const color = "#ECB22E"; // Slack sin "danger"-aktige farge
+
+  /** @type {Array<any>} */
   const blocks = [];
 
-  // Header
+  // Header (kun inni attachment, ikke som separat text)
   blocks.push({
     type: "header",
     text: {
@@ -97,7 +99,7 @@ function buildBlocksForFailedTests(failedTests) {
     },
   });
 
-  // Oppsummeringsseksjon
+  // Oppsummering
   blocks.push({
     type: "section",
     fields: [
@@ -107,14 +109,16 @@ function buildBlocksForFailedTests(failedTests) {
       },
       {
         type: "mrkdwn",
-        text: `*Antall feilede tester:*\n${uniqueFailedTests.length}`,
+        text: `*Antall feilede tester:*\n\`${uniqueFailedTests.length}\``,
+      },
+      {
+        type: "mrkdwn",
+        text: `*Severity:*\n\`${severity}\``,
       },
     ],
   });
 
-  blocks.push({
-    type: "divider",
-  });
+  blocks.push({ type: "divider" });
 
   // En seksjon per test
   uniqueFailedTests.forEach((test, index) => {
@@ -134,7 +138,6 @@ function buildBlocksForFailedTests(failedTests) {
                 : url;
         return `• ${slackUrl}`;
       });
-
       text += urlLines.join("\n");
     }
 
@@ -154,6 +157,7 @@ function buildBlocksForFailedTests(failedTests) {
       text: "_Mer informasjon om tester som feiler finnes i CI-loggene._",
     },
   ];
+
   if (ciLinks.length > 0) {
     contextElements.push({
       type: "mrkdwn",
@@ -166,9 +170,15 @@ function buildBlocksForFailedTests(failedTests) {
     elements: contextElements,
   });
 
+  // Viktig: ingen top-level text her → bare attachment med farge + blocks
   return {
-    text: headerText, // fallback for notifikasjoner / eldre klienter
-    blocks,
+    attachments: [
+      {
+        color,
+        fallback: headerText, // vises i notifikasjoner / eldre klienter
+        blocks,
+      },
+    ],
   };
 }
 
