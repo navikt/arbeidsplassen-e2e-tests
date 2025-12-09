@@ -12,20 +12,64 @@ For å få tilgang til \* .intern.dev.nav.no er testene som er avhengig av en in
 
 Testene som ikke er avhengig av en innlogget bruker kjører mot produksjon.
 
+### Første gang
+
+Installer avhengigheter og Playwright-browsere:
+```bash
+npm ci
+npx playwright install --with-deps
+```
 ### Start Playwright GUI lokalt
 
 Følgende kommando start Playwright i UI mode, med mulighet for å kjøre en eller flere tester visuelt.
 
-`npx playwright test --ui`
-
-### Kjør en enkelt test
-
-```
-npx playwright test "navnet på testen"
-Eksempel
-npx playwright test prod-checklinks
+```bash
+export HTML_VALIDATOR_URL="http://localhost:8888/?out=json"
+npx playwright test --ui
 ```
 
+### DEV- og tilgjengelighetstester
+Kjør alle dev-/UU-tester:
+```bash
+npx playwright test dev-e2e
+```
+
+Kjør en enkelt fil:
+```bash
+npx playwright test tests/dev-e2e.spec.js
+```
+
+Slack-varsling er som standard skrudd av lokalt.
+For å teste Slack-varsler kan du sette:
+
+```bash
+export SLACK_ALERTS_ENABLED=true
+export SLACK_BOT_TOKEN=<token>
+npx playwright test dev-e2e
+```
+
+### Prod: lenker og HTML-validering (prod-checklinks)
+Testen prod-checklinks crawler utvalgte sider i prod, sjekker interne/eksterne lenker og validerer HTML.
+
+>NB: Denne testen kan ta flere minutter. Den er ment å kjøre nattlig i CI, men kan også kjøres manuelt ved behov.
+
+### lokal Nu HTML Checker
+For å få samme oppsett som i CI, kan du kjøre Nu HTML Checker lokalt via Docker:
+
+1. Start validatoren:
+```bash 
+docker run --rm -p 8888:8888 ghcr.io/validator/validator:latest
+```
+2. Kjør testen med lokal validator:
+
+```bash
+export HTML_VALIDATOR_URL="http://localhost:8888/?out=json"
+npx playwright test tests/prod-checklinks.spec.js
+```
+### Playwright-rapport
+```bash
+npx playwright show-report
+```
 ### Mer informasjon om tester som feiler.
 
 Logger med mer informasjon om testene som feiler kan finnes i:<br>

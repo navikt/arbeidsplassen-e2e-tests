@@ -45,23 +45,34 @@ async function validateLink(link, page) {
   }
   return link;
 }
-
-let w3cRateLimited = false; // global flagg for denne test-runden
 const HTML_VALIDATOR_URL =
     process.env.HTML_VALIDATOR_URL;
 
-async function validateHtmlWithW3C(page, url) {
-  // Hvis vi allerede har fått 429 tidligere i denne runnen, skipper vi resten
-  if (w3cRateLimited) {
+// Teller og rate-limit flagg for validatoren
+let htmlValidationCount = 0;
+let htmlValidatorRateLimited = false;
+let MAX_HTML_VALIDATIONS_PER_RUN = 100;
+
+async function validateHtml(page, url) {
+  if (htmlValidatorRateLimited) {
     console.log(
-        `[HTML] Skipper W3C-validering for ${url} – tidligere 429 Too Many Requests i denne testrunden.`,
+        `[HTML] Skipper HTML-validering for ${url} – validator er tidligere rate-limitet (429) i denne testrunden.`,
     );
     return { hasErrors: false, skipped: true };
   }
 
+  if (htmlValidationCount >= MAX_HTML_VALIDATIONS_PER_RUN) {
+    console.log(
+        `[HTML] Skipper HTML-validering for ${url} – har allerede validert ${htmlValidationCount} sider i denne testrunden.`,
+    );
+    return { hasErrors: false, skipped: true };
+  }
+
+  htmlValidationCount += 1;
+
   try {
     console.log(
-        `[HTML] Validerer HTML for: ${url}`,
+        `[HTML] Validerer HTML for: ${url} (${htmlValidationCount}/${MAX_HTML_VALIDATIONS_PER_RUN})`,
     );
 
     const html = await page.content();
@@ -76,18 +87,18 @@ async function validateHtmlWithW3C(page, url) {
       body: html,
     });
 
-    // Spesialhåndter 429 → sett flagg og ikke kast
+    // 429 → sett flagg og ikke kast, bare logg og skip videre validering.
     if (response.status === 429) {
-      w3cRateLimited = true;
+      htmlValidatorRateLimited = true;
       console.warn(
-          `[HTML] W3C validator returned 429 Too Many Requests for ${url}. Deaktiverer videre HTML-validering i denne testrunden.`,
+          `[HTML] HTML-validatoren returnerte 429 Too Many Requests for ${url}. Deaktiverer videre HTML-validering i denne testrunden.`,
       );
       return { hasErrors: false, skipped: true };
     }
 
     if (!response.ok) {
       console.warn(
-          `[HTML] W3C validator returned ${response.status} ${response.statusText} for ${url}. Skipper validering for denne siden.`,
+          `[HTML] HTML-validatoren returnerte ${response.status} ${response.statusText} for ${url}. Skipper validering for denne siden.`,
       );
       return { hasErrors: false, skipped: true };
     }
@@ -143,7 +154,7 @@ async function validateHtmlWithW3C(page, url) {
     return { hasErrors, skipped: false };
   } catch (error) {
     console.warn(
-        `[HTML] Feil ved kall til W3C for ${url}: ${error.message}. Skipper validering for denne siden.`,
+        `[HTML] Feil ved kall til HTML-validator for ${url}: ${error.message}. Skipper validering for denne siden.`,
     );
     return { hasErrors: false, skipped: true };
 
@@ -176,13 +187,16 @@ test("Check internal links, external links and validate HTML on internal pages."
       return;
     }
 
-    const isSameDomain = new URL(url).hostname === new URL(baseUrl).hostname;
+    const baseHost = new URL(baseUrl).hostname;
+    const currentHost = new URL(url).hostname;
+    const isSameDomain = currentHost === baseHost;
+
     visitedUrls.add(url);
 
     if (isSameDomain && visitedUrls.size < maxPagesToCheck) {
       console.log(`Checking: ${url}`);
 
-      // Last inn siden én gang
+      // 1) Last inn siden én gang
       try {
         await page.goto(url, { waitUntil: "domcontentloaded" });
         await page.waitForLoadState("networkidle");
@@ -193,7 +207,8 @@ test("Check internal links, external links and validate HTML on internal pages."
         return;
       }
 
-   const { hasErrors } = await validateHtmlWithW3C(page, url);
+      // HTML-validering (med kvote + 429-guard)
+      const { hasErrors } = await validateHtml(page, url);
       if (hasErrors) {
         if (Object.keys(linkIssues).length < 10) {
           linkIssues[url] = `HTML validation failed for ${url}`;
@@ -218,7 +233,9 @@ test("Check internal links, external links and validate HTML on internal pages."
               anchors
                   .map((anchor) => anchor.href)
                   .filter((href) => {
-                    if (!href) return false;
+                    if (!href) {
+                      return false;
+                    }
 
               // Skip specific paths
               const excludedPaths = [
