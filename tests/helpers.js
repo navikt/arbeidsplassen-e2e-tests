@@ -1,46 +1,51 @@
 import { expect } from "@playwright/test";
 
+/** @typedef {import("@playwright/test").Page} Page */
+
 const DEV_DOMAIN = "https://arbeidsplassen.intern.dev.nav.no";
 const PROD_DOMAIN = "https://arbeidsplassen.nav.no";
 const LOCAL_DOMAIN = "http://localhost:3000";
 
+const escapeRegExp = (value) => {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+};
+
+/** @param {Page} page */
 export const getLoggedInPage = async (page) => {
-  await page.goto("https://arbeidsplassen.intern.dev.nav.no", {
-    waitUntil: "domcontentloaded",
-  });
-  await page.waitForLoadState("networkidle");
+  const baseUrl = getDevDomain();
 
-  const login = page.locator("button", { hasText: "Logg inn" }).first();
-  await login.click();
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded" });
 
-  expect(page.url()).toMatch(
-    `https://login.test.idporten.no/authorize/selector`
-  );
-  await page.waitForLoadState("networkidle");
+  const loginButton = page.getByRole("button", { name: "Logg inn" }).first();
+  await expect(loginButton).toBeVisible();
 
-  const loginIdPorten = page.locator("a", { hasText: "TestID" }).first();
-  await loginIdPorten.click();
+  await Promise.all([
+    page.waitForURL(/https:\/\/login\.test\.idporten\.no\/authorize\/selector/),
+    loginButton.click(),
+  ]);
 
-  expect(
-    page.url().startsWith("https://testid.test.idporten.no/authorize")
-  ).toBe(true);
-  await page.waitForLoadState("networkidle");
+  const testIdLink = page.getByRole("link", { name: "TestID" }).first();
+  await expect(testIdLink).toBeVisible();
 
-  await page.fill("input[id=pid]", "07499738492");
+  await Promise.all([
+    page.waitForURL(/https:\/\/testid\.test\.idporten\.no\/authorize/),
+    testIdLink.click(),
+  ]);
 
-  await page.click("button[type=submit]");
+  const pidInput = page.locator("input#pid");
+  await expect(pidInput).toBeVisible();
+  await pidInput.fill("07499738492");
 
-  expect(page.url()).toMatch(`https://arbeidsplassen.intern.dev.nav.no/`);
+  const submitButton = page.locator("button[type=submit]");
+  await expect(submitButton).toBeVisible();
 
-  await page.waitForLoadState("networkidle");
+  await Promise.all([
+    page.waitForURL(new RegExp(`^${escapeRegExp(baseUrl)}/`)),
+    submitButton.click(),
+  ]);
 
-  await expect(page).toHaveTitle(
-    "Arbeidsplassen.no - Alle ledige jobber, samlet på én plass"
-  );
-
-  await expect(
-    page.locator("a", { hasText: "Min side" }).first()
-  ).toBeVisible();
+  await expect(page).toHaveTitle("Arbeidsplassen.no - Alle ledige jobber, samlet på én plass");
+  await expect(page.locator("a", { hasText: "Min side" }).first()).toBeVisible();
 
   return page;
 };
