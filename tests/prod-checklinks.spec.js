@@ -1,62 +1,192 @@
 import { test } from "@playwright/test";
 import { getProdDomain } from "./helpers";
 
-function randomDelay(min, max) {
-  const ms = Math.floor(Math.random() * (max - min + 1) + min);
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}
+const USER_AGENT =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36";
 
-async function validateLink(link, page) {
-  console.log("Validating link", link);
-  let tries = 0;
-  while (tries < 2) {
-    tries += 1;
-    // eslint-disable-next-line no-await-in-loop
-    await randomDelay(250, 5000); // Forsinkelse mellom forsøk
-    try {
-      // eslint-disable-next-line no-await-in-loop
-      const response = await page.request.head(link, {
-        headers: {
-          Accept: "text/html,application/xhtml+xml",
-          "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-        },
-        timeout: 20000, // 20 second timeout
-      }); // equivalent to command "curl -I <link>"
+const REQUEST_TIMEOUT_MS = 20_000;
+const NAVIGATION_TIMEOUT_MS = 30_000;
+const HTML_VALIDATION_TIMEOUT_MS = 25_000;
+const HTML_FETCH_TIMEOUT_MS = 20_000;
 
-      if (response?.status() === 429) {
-        console.warn(
-          `Rate limit hit for ${link} - try ${tries}, retrying after delay`
-        );
-        // eslint-disable-next-line no-await-in-loop
-        await randomDelay(1000, 10000); // Vent 1 sekund og prøv igjen
-      } else if (response?.status() < 400 || response?.status() === 401) {
-        return null;
-      } else {
-        console.error(
-          `invalid response status ${link} - try ${tries} : ${response?.status()}`
-        );
-      }
-    } catch (error) {
-      console.error(`error reaching ${link}, try ${tries} : ${error}`);
+const HTML_VALIDATOR_URL = process.env.HTML_VALIDATOR_URL;
+const HTML_VALIDATION_USER_AGENT = "Validator.nu/LV http://validator.w3.org/services";
+
+const MAX_HTML_VALIDATIONS_PER_RUN = Number(process.env.MAX_HTML_VALIDATIONS_PER_RUN ?? "100");
+
+const sleep = (ms) =>
+    new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+
+const randomBetween = (min, max) => {
+  return Math.floor(Math.random() * (max - min + 1) + min);
+};
+
+const fetchWithTimeout = async (url, init, timeoutMs) => {
+  const abortController = new AbortController();
+  const timeoutId = setTimeout(() => {
+    abortController.abort();
+  }, timeoutMs);
+
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: abortController.signal,
+    });
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
+const isOkStatus = (status) => {
+  // 2xx/3xx = OK, og 401 lar vi passere som før
+  if (status < 400) {
+    return true;
+  }
+  if (status === 401) {
+    return true;
+  }
+  return false;
+};
+
+const fetchHtmlForValidation = async (page, url) => {
+  const headers = {
+    Accept: "text/html,application/xhtml+xml",
+    "User-Agent": HTML_VALIDATION_USER_AGENT,
+  };
+
+  const attempts = 2;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    await sleep(randomBetween(0, 150));
+
+    const response = await page.request.get(url, {
+      headers,
+      timeout: HTML_FETCH_TIMEOUT_MS,
+    });
+
+    const status = response?.status() ?? 0;
+
+    if (status === 429) {
+      const backoffMs = randomBetween(1500, 10_000);
+      console.warn(`[HTML] 429 from site for ${url} (attempt ${attempt}/${attempts}), sleeping ${backoffMs}ms`);
+      await sleep(backoffMs);
+      continue;
+    }
+
+    // Aksepter 2xx/3xx (Playwright følger ofte redirects, men vi er litt rause)
+    if (status > 0 && status < 400) {
+      return await response.text();
+    }
+
+    console.warn(`[HTML] Unexpected status ${status} when fetching HTML for ${url} (attempt ${attempt}/${attempts})`);
+
+    if (attempt < attempts) {
+      await sleep(randomBetween(200, 800));
     }
   }
+
+  return null;
+};
+
+async function validateLink(link, page) {
+  // NB: denne funksjonen returnerer null når alt er OK, og "link" når den mener lenken er broken
+  console.log("Validating link", link);
+
+  const headers = {
+    Accept: "text/html,application/xhtml+xml",
+    "User-Agent": USER_AGENT,
+  };
+
+  const attempts = 2;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    // Litt jitter for å ikke slå alt på samme millisekund
+    // (men ikke sekunder med delay per lenke)
+    await sleep(randomBetween(0, 150));
+
+    try {
+      const headResponse = await page.request.head(link, {
+        headers,
+        timeout: REQUEST_TIMEOUT_MS,
+      });
+
+      const headStatus = headResponse?.status() ?? 0;
+
+      if (headStatus === 429) {
+        const backoffMs = randomBetween(1500, 10_000);
+        console.warn(`[HEAD] 429 rate limit for ${link} (attempt ${attempt}/${attempts}), sleeping ${backoffMs}ms`);
+        await sleep(backoffMs);
+        continue;
+      }
+
+      if (isOkStatus(headStatus)) {
+        return null;
+      }
+
+      // Mange servere støtter ikke HEAD (405), og noen blokkerer HEAD (403) selv om GET funker.
+      if (headStatus === 405 || headStatus === 403) {
+        const getResponse = await page.request.get(link, {
+          headers,
+          timeout: REQUEST_TIMEOUT_MS,
+        });
+
+        const getStatus = getResponse?.status() ?? 0;
+
+        if (getStatus === 429) {
+          const backoffMs = randomBetween(1500, 10_000);
+          console.warn(`[GET] 429 rate limit for ${link} (attempt ${attempt}/${attempts}), sleeping ${backoffMs}ms`);
+          await sleep(backoffMs);
+          continue;
+        }
+
+        if (isOkStatus(getStatus)) {
+          return null;
+        }
+
+        // Hvis vi fortsatt får 403/405 etter GET, er dette ofte bot/WAF eller metode-restriksjon.
+        // I praksis er det ofte bedre å skippe enn å feile hele testen pga eksterne domener.
+        if (getStatus === 403 || getStatus === 405) {
+          console.warn(`[SKIP] ${link} returned ${getStatus} even after GET fallback (likely blocked).`);
+          return null;
+        }
+
+        console.error(`[GET] invalid status ${getStatus} for ${link} (attempt ${attempt}/${attempts})`);
+      } else {
+        console.error(`[HEAD] invalid status ${headStatus} for ${link} (attempt ${attempt}/${attempts})`);
+      }
+    } catch (error) {
+      console.error(`Error reaching ${link} (attempt ${attempt}/${attempts}):`, error);
+    }
+
+    if (attempt < attempts) {
+      await sleep(randomBetween(200, 800));
+    }
+  }
+
   return link;
 }
-const HTML_VALIDATOR_URL =
-    process.env.HTML_VALIDATOR_URL;
 
-// Teller og rate-limit flagg for validatoren
+// Teller og flagg for validatoren
 let htmlValidationCount = 0;
 let htmlValidatorRateLimited = false;
-let MAX_HTML_VALIDATIONS_PER_RUN = 100;
+let htmlValidatorMissingLogged = false;
 
 async function validateHtml(page, url) {
+  if (!HTML_VALIDATOR_URL) {
+    if (!htmlValidatorMissingLogged) {
+      htmlValidatorMissingLogged = true;
+      console.warn(
+          `[HTML] HTML_VALIDATOR_URL er ikke satt. Skipper HTML-validering i denne testrunden.`,
+      );
+    }
+    return { hasErrors: false, skipped: true };
+  }
+
   if (htmlValidatorRateLimited) {
     console.log(
-        `[HTML] Skipper HTML-validering for ${url} – validator er tidligere rate-limitet (429) i denne testrunden.`,
+        `[HTML] Skipper HTML-validering for ${url} – validator ble rate-limitet (429) tidligere i denne testrunden.`,
     );
     return { hasErrors: false, skipped: true };
   }
@@ -75,30 +205,36 @@ async function validateHtml(page, url) {
         `[HTML] Validerer HTML for: ${url} (${htmlValidationCount}/${MAX_HTML_VALIDATIONS_PER_RUN})`,
     );
 
-    const html = await page.content();
+    const html = await fetchHtmlForValidation(page, url);
 
-    const response = await fetch(HTML_VALIDATOR_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "text/html; charset=utf-8",
-        "User-Agent":
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/109.0.0.0 Safari/537.36",
-      },
-      body: html,
-    });
+    if (!html) {
+      console.warn(`[HTML] Klarte ikke å hente HTML for validering fra ${url}. Skipper validering for denne siden.`);
+      return { hasErrors: false, skipped: true };
+    }
 
-    // 429 → sett flagg og ikke kast, bare logg og skip videre validering.
+    const response = await fetchWithTimeout(
+        HTML_VALIDATOR_URL,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "text/html; charset=utf-8",
+          },
+          body: html,
+        },
+        HTML_VALIDATION_TIMEOUT_MS,
+    );
+
     if (response.status === 429) {
       htmlValidatorRateLimited = true;
       console.warn(
-          `[HTML] HTML-validatoren returnerte 429 Too Many Requests for ${url}. Deaktiverer videre HTML-validering i denne testrunden.`,
+          `[HTML] Validatoren returnerte 429 Too Many Requests for ${url}. Deaktiverer videre HTML-validering i denne testrunden.`,
       );
       return { hasErrors: false, skipped: true };
     }
 
     if (!response.ok) {
       console.warn(
-          `[HTML] HTML-validatoren returnerte ${response.status} ${response.statusText} for ${url}. Skipper validering for denne siden.`,
+          `[HTML] Validatoren returnerte ${response.status} ${response.statusText} for ${url}. Skipper validering for denne siden.`,
       );
       return { hasErrors: false, skipped: true };
     }
@@ -117,19 +253,13 @@ async function validateHtml(page, url) {
 
     if (Array.isArray(result.messages) && result.messages.length > 0) {
       const errors = result.messages.filter((msg) => msg.type === "error");
-      const warnings = result.messages.filter(
-          (msg) => msg.type === "warning",
-      );
+      const warnings = result.messages.filter((msg) => msg.type === "warning");
 
       if (errors.length > 0) {
-        console.error(
-            `❌ Found ${errors.length} HTML validation errors on ${url}:`,
-        );
+        console.error(`❌ Found ${errors.length} HTML validation errors on ${url}:`);
         errors.forEach((error, index) => {
           console.error(
-              `  ${index + 1}. [Line ${error.lastLine || "?"}, Col ${
-                  error.lastColumn || "?"
-              }] ${error.message}`,
+              `  ${index + 1}. [Line ${error.lastLine || "?"}, Col ${error.lastColumn || "?"}] ${error.message}`,
           );
           if (error.extract) {
             console.error(`     ${error.extract.trim()}`);
@@ -139,9 +269,7 @@ async function validateHtml(page, url) {
       }
 
       if (warnings.length > 0) {
-        console.warn(
-            `⚠️  Found ${warnings.length} HTML validation warnings on ${url}`,
-        );
+        console.warn(`⚠️  Found ${warnings.length} HTML validation warnings on ${url}`);
         warnings.forEach((warning, index) => {
           console.warn(`  ${index + 1}. ${warning.message}`);
           if (warning.extract) {
@@ -153,19 +281,26 @@ async function validateHtml(page, url) {
 
     return { hasErrors, skipped: false };
   } catch (error) {
-    console.warn(
-        `[HTML] Feil ved kall til HTML-validator for ${url}: ${error.message}. Skipper validering for denne siden.`,
-    );
+    const message = typeof error?.message === "string" ? error.message : String(error);
+    console.warn(`[HTML] Feil ved kall til HTML-validator for ${url}: ${message}. Skipper validering for denne siden.`);
     return { hasErrors: false, skipped: true };
-
   }
 }
 
+const toCanonicalUrl = (input) => {
+  const url = new URL(input);
+  url.hash = "";
 
-test("Check internal links, external links and validate HTML on internal pages.", async ({
-  page,
-}) => {
+  if (url.pathname !== "/" && url.pathname.endsWith("/")) {
+    url.pathname = url.pathname.slice(0, -1);
+  }
+
+  return url.toString();
+};
+
+test("Check internal links, external links and validate HTML on internal pages.", async ({ page }) => {
   test.setTimeout(30 * 60 * 1000); // 30 minute timeout
+
   const baseUrl = getProdDomain();
 
   const visitedUrls = new Set();
@@ -179,11 +314,13 @@ test("Check internal links, external links and validate HTML on internal pages."
   const additionalPages = ["/bedrift"];
   additionalPages.forEach((pagePath) => {
     const fullUrl = new URL(pagePath, baseUrl).toString();
-    urlsToVisit.add(fullUrl);
+    urlsToVisit.add(toCanonicalUrl(fullUrl));
   });
 
   const checkLinks = async (url) => {
-    if (visitedUrls.has(url) || visitedUrls.size >= maxPagesToCheck) {
+    const canonicalUrl = toCanonicalUrl(url);
+
+    if (visitedUrls.has(canonicalUrl) || visitedUrls.size >= maxPagesToCheck) {
       return;
     }
 
@@ -191,121 +328,91 @@ test("Check internal links, external links and validate HTML on internal pages."
     const currentHost = new URL(url).hostname;
     const isSameDomain = currentHost === baseHost;
 
-    visitedUrls.add(url);
+    visitedUrls.add(canonicalUrl);
 
-    if (isSameDomain && visitedUrls.size < maxPagesToCheck) {
-      console.log(`Checking: ${url}`);
+    if (!isSameDomain || visitedUrls.size >= maxPagesToCheck) {
+      return;
+    }
 
-      // 1) Last inn siden én gang
-      try {
-        await page.goto(url, { waitUntil: "domcontentloaded" });
-        await page.waitForLoadState("networkidle");
-      } catch (error) {
-        console.error(`Failed to load ${url}:`, error.message);
-        // registrer som issue, eller bare logg og gå videre
-        linkIssues[url] = `Failed to load page for link check: ${error.message}`;
-        return;
+    console.log(`Checking: ${url}`);
+
+    try {
+      await page.goto(url, { waitUntil: "domcontentloaded", timeout: NAVIGATION_TIMEOUT_MS });
+      // Best effort: noen sider blir aldri “network idle”, men “load” kan fortsatt skje.
+      await page.waitForLoadState("load", { timeout: 10_000 }).catch(() => {});
+    } catch (error) {
+      const message = typeof error?.message === "string" ? error.message : String(error);
+      console.error(`Failed to load ${url}:`, message);
+      linkIssues[url] = `Failed to load page for link check: ${message}`;
+      return;
+    }
+
+    const { hasErrors } = await validateHtml(page, url);
+    if (hasErrors) {
+      if (Object.keys(linkIssues).length < 10) {
+        linkIssues[url] = `HTML validation failed for ${url}`;
+      } else if (Object.keys(linkIssues).length === 10) {
+        linkIssues[url] =
+            `HTML validation failed for ${url}\n\n` +
+            `Found more than 10 pages with validation errors, only showing first 10`;
+      }
+    }
+
+    const validationError = await validateLink(url, page);
+    if (validationError) {
+      console.error(`Broken link found on: ${page.url()} ${url}`);
+      linkIssues[url] = `Broken link found on ${url} -> ${page.url()}`;
+    }
+
+    const links = await page.$$eval(
+        "a[href]",
+        (anchors) =>
+            anchors
+                .map((anchor) => anchor.href)
+                .filter((href) => {
+                  if (!href) {
+                    return false;
+                  }
+
+                  const excludedPaths = ["/stillinger/stilling", "/stillingsregistrering", "/cv", "/oauth2", "https://login.idporten.no/"];
+                  if (excludedPaths.some((path) => href.includes(path))) {
+                    return false;
+                  }
+
+                  if (href.includes("#") || href.includes("mailto:") || href.includes("tel:")) {
+                    return false;
+                  }
+
+                  return true;
+                }),
+    );
+
+    for (const link of links) {
+      if (visitedUrls.size >= maxPagesToCheck) {
+        break;
       }
 
-      // HTML-validering (med kvote + 429-guard)
-      const { hasErrors } = await validateHtml(page, url);
-      if (hasErrors) {
-        if (Object.keys(linkIssues).length < 10) {
-          linkIssues[url] = `HTML validation failed for ${url}`;
-        } else if (Object.keys(linkIssues).length === 10) {
-          linkIssues[url] =
-              `HTML validation failed for ${url} \n\n` +
-              `Found more than 10 pages with validation errors, only showing first 10`;
-        }
-      }
+      const linkUrl = new URL(link);
+      const externalKey = toCanonicalUrl(link);
 
-      // HEAD på selve URLen (én gang)
-      const validationError = await validateLink(url, page);
-      if (validationError) {
-        console.error(`Broken link found on: ${page.url()} ${url}`);
-        linkIssues[url] = `Broken link found on ${url} -> ${page.url()}`;
-      }
+      if (!visitedUrls.has(link) && !urlsToVisit.has(link)) {
+        if (linkUrl.hostname === new URL(baseUrl).hostname) {
+          urlsToVisit.add(toCanonicalUrl(link));
+        } else if (!validatedExternalLinks.has(externalKey)) {
+          try {
+            const error = await validateLink(link, page);
+            validatedExternalLinks.add(externalKey);
 
-      // Finn nye lenker å besøke videre
-      const links = await page.$$eval(
-          "a[href]",
-          (anchors, base) =>
-              anchors
-                  .map((anchor) => anchor.href)
-                  .filter((href) => {
-                    if (!href) {
-                      return false;
-                    }
-
-              // Skip specific paths
-              const excludedPaths = [
-                "/stillinger/stilling",
-                "/stillingsregistrering",
-                "/cv",
-                "/oauth2",
-                "https://login.idporten.no/",
-              ];
-
-                    if (excludedPaths.some((path) => href.includes(path))) {
-                      return false;
-                    }
-
-              // Skip anchors, mailto, and tel links
-              if (
-                href.includes("#") ||
-                href.includes("mailto:") ||
-                href.includes("tel:")
-              ) {
-                return false;
-              }
-
-                    return true;
-                  }),
-          baseUrl,
-      );
-
-      for (const link of links) {
-        if (visitedUrls.size >= maxPagesToCheck) {
-          break;
-        }
-
-        const linkUrl = new URL(link);
-        // Only process if we haven't seen this URL before and it's not already queued
-        if (!visitedUrls.has(link) && !urlsToVisit.has(link)) {
-          // Only add to visit queue if it's the same domain
-          if (linkUrl.hostname === new URL(baseUrl).hostname) {
-            urlsToVisit.add(link);
-          } else if (!validatedExternalLinks.has(link)) {
-            // Only validate external links we haven't seen
-            // Validate external links but don't follow them
-            try {
-              const error = await validateLink(link, page);
-              validatedExternalLinks.add(link);
-
-              if (error) {
-                console.error(`Broken external link found on ${url}: ${link}`);
-                linkIssues[url] = `Broken external link found on ${url} -> ${link}`;
-              } else {
-                console.log(`VALID: ${link}`);
-              }
-            } catch (err) {
-              console.error(`Error validating external link ${link}:`, err);
+            if (error) {
+              console.error(`Broken external link found on ${url}: ${link}`);
+              linkIssues[url] = `Broken external link found on ${url} -> ${link}`;
+            } else {
+              console.log(`VALID: ${link}`);
             }
+          } catch (err) {
+            console.error(`Error validating external link ${link}:`, err);
           }
         }
-      }
-    } else {
-      // Validate external links but don't follow them
-      try {
-        const error = await validateLink(url, page);
-        if (error) {
-          console.error(`Broken external link found on ${url}: ${url}`);
-          linkIssues[url] = `Broken external link found on ${url} -> ${url}`;
-        } else {
-          console.log(`VALID: ${url}`);
-        }
-      } catch (err) {
-        console.error(`Error validating external link ${url}:`, err);
       }
     }
   };
@@ -316,7 +423,6 @@ test("Check internal links, external links and validate HTML on internal pages."
     urlsToVisit.delete(nextUrl);
   }
 
-  // Log all link issues found
   const issueCount = Object.keys(linkIssues).length;
   if (issueCount > 0) {
     const errorMessages = Object.values(linkIssues).join("\n");

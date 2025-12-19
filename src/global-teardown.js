@@ -76,13 +76,13 @@ function buildBlocksForFailedTests(failedTests) {
       MAX_TESTS_IN_MESSAGE,
   );
 
-  const browserNames = new Set(
+/*  const browserNames = new Set(
       uniqueFailedTests.map((t) => t.projectName || "unknown"),
-  );
+  );*/
 
   const headerText = "❌ Arbeidsplassen E2E – tester feilet";
 
-  const severity = "Warning";
+  //const severity = "Warning";
   // Bruk eksplisitt hex-farge for å være sikker på at Slack faktisk farger stripen
   const color = "#ECB22E"; // Slack sin "danger"-aktige farge
 
@@ -100,7 +100,8 @@ function buildBlocksForFailedTests(failedTests) {
   });
 
   // Oppsummering
-  blocks.push({
+  // bruker bare chromium nå, og severity er allitd warning så per nå kommenterer jeg dette ut
+  /*blocks.push({
     type: "section",
     fields: [
       {
@@ -116,7 +117,7 @@ function buildBlocksForFailedTests(failedTests) {
         text: `*Severity:*\n\`${severity}\``,
       },
     ],
-  });
+  });*/
 
   blocks.push({ type: "divider" });
 

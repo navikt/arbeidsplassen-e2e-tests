@@ -1,72 +1,37 @@
 import { test, expect } from "@playwright/test";
 import { getProdDomain } from "./helpers.js";
 
-test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
-  test.setTimeout(2 * 60 * 1000); // 1 minute timeout for this test
-  const maxAttempts = 5;
-  const minDelay = 2000;
-  const maxDelay = 5000;
-  let lastError;
+test.describe("PROD uptime", () => {
+  test.describe.configure({
+    retries: 4,
+    timeout: 60_000,
+  });
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      await page.goto(getProdDomain());
-      const h1 = page.locator("h1").first();
-      await expect(h1).toBeVisible();
-      return;
-    } catch (error) {
-      lastError = error;
-      if (attempt < maxAttempts) {
-        const delay =
-          Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-        console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
+  test("Verify Arbeidsplassen PROD homepage loads", async ({ page }) => {
+    await page.goto(getProdDomain(), { waitUntil: "domcontentloaded", timeout: 30_000 });
+    await expect(page.locator("h1").first()).toBeVisible({ timeout: 15_000 });
+  });
+
+  test("/stillinger is working in PROD and count is above 0", async ({ page }) => {
+    await page.goto(`${getProdDomain()}/stillinger`, {
+      waitUntil: "domcontentloaded",
+      timeout: 30_000,
+    });
+
+    const treffHeading = page.locator("h2", { hasText: /treff/i }).first();
+    await expect(treffHeading).toBeVisible({ timeout: 20_000 });
+
+    const parseTreff = (text) => {
+      const normalized = text.replace(/\u00A0/g, " "); // NBSP -> space
+      const match = normalized.match(/(\d[\d\s]*)/);
+      if (!match) {
+        return 0;
       }
-    }
-  }
+      return Number(match[1].replace(/\s/g, ""));
+    };
 
-  // If we get here, all attempts failed
-  throw lastError;
-});
-
-test("/stillinger is working in PROD and count is above 0", async ({
-  page,
-}) => {
-  test.setTimeout(2 * 60 * 1000); // 1 minute timeout for this test
-  const maxAttempts = 5;
-  const minDelay = 2000;
-  const maxDelay = 5000;
-  let lastError;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      await page.goto(getProdDomain() + "/stillinger", {
-        waitUntil: "domcontentloaded",
-      });
-      await page.waitForLoadState("networkidle");
-      await page.waitForTimeout(1000);
-
-      const h2 = page.locator("h2", { hasText: "treff" }).first();
-      await expect(h2).toHaveText(/[\d\s]+.*treff/i, { timeout: 10000 });
-
-      const text = await h2.innerText();
-
-      const match = text.match(/[\d\s]+/);
-      const number = parseInt(match?.[0].replace(/\s/g, "") || "0", 10);
-
-      expect(number).toBeGreaterThan(0);
-      return;
-    } catch (error) {
-      lastError = error;
-      if (attempt < maxAttempts) {
-        const delay =
-          Math.floor(Math.random() * (maxDelay - minDelay + 1)) + minDelay;
-        console.log(`Attempt ${attempt} failed, retrying in ${delay}ms...`);
-        await new Promise((resolve) => setTimeout(resolve, delay));
-      }
-    }
-  }
-
-  // If we get here, all attempts failed
-  throw lastError;
+    await expect
+        .poll(async () => parseTreff(await treffHeading.innerText()), { timeout: 30_000 })
+        .toBeGreaterThan(0);
+  });
 });
