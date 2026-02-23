@@ -1,7 +1,7 @@
 name: Check broken links in prod
 on:
   schedule:
-    - cron: '0 0 * * *' 
+    - cron: '0 0 * * *'
   workflow_dispatch:
   push:
     branches:
@@ -12,8 +12,8 @@ on:
       - 'tests/prod-uptest.spec.js'
       - '.github/workflows/deploy-dev-e2e-tests.yml'
       - '.github/workflows/deploy-prod-e2e-tests.yml'
-  
-jobs:      
+
+jobs:
   test:
     timeout-minutes: 60
     runs-on: ubuntu-latest
@@ -25,20 +25,24 @@ jobs:
         ports:
           - 8888:8888
     steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-node@v4
+    - uses: actions/checkout@v6
+    - uses: pnpm/action-setup@v4
+      name: Install pnpm
+      with:
+        run_install: false
+    - uses: actions/setup-node@v6
       with:
         node-version: lts/*
-        cache: 'npm'
+        cache: 'pnpm'
         registry-url: 'https://npm.pkg.github.com'
         scope: '@navikt'
     - name: Install dependencies
       env:
         NPM_AUTH_TOKEN: ${{ secrets.READER_TOKEN }}
       run: |
-        npm config set @navikt:registry https://npm.pkg.github.com
-        npm config set //npm.pkg.github.com/:_authToken $NPM_AUTH_TOKEN
-        npm ci --prefer-offline --no-audit --ignore-scripts
+        pnpm config set @navikt:registry https://npm.pkg.github.com
+        pnpm config set //npm.pkg.github.com/:_authToken $NPM_AUTH_TOKEN
+        pnpm install --prefer-offline --no-audit --ignore-scripts
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
