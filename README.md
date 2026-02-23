@@ -2,7 +2,7 @@
 
 Arbeidsplassen tests
 
-## Install
+## Komme i gang
 
 `npm install`
 
@@ -148,3 +148,9 @@ Følgende kontroller gjøres i hovedsak manuelt når tilgjengelighetserklæringe
 - Brukeropplevelse på mobil, nettbrett og desktop ved 200–400 % zoom.
 
 Disse manuelle kontrollene suppleres av de automatiske testene over, slik at vi får både teknisk og innholdsmessig kvalitet.
+
+## Hendvendelser
+Spørsmål knyttet til koden eller repositoryet kan stilles som issues her på GitHub
+
+### For Nav-ansatte
+Denne applikasjonen er opprettholdt av team arbeidsplassen.no i seksjon arbeidsgivertjenester. Interne henvendelser kan sendes via Slack i kanalene #team-arbeidsplassen_no eller #arbeidsplassen-dev
