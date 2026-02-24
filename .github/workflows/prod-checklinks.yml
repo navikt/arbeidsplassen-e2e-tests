@@ -42,7 +42,7 @@ jobs:
       run: |
         pnpm config set @navikt:registry https://npm.pkg.github.com
         pnpm config set //npm.pkg.github.com/:_authToken $NPM_AUTH_TOKEN
-        pnpm install --prefer-offline --no-audit --ignore-scripts
+        pnpm install --prefer-offline --no-audit --ignore-scripts --frozen-lockfile
     - name: Install Playwright Browsers
       run: npx playwright install --with-deps
     - name: Run Playwright tests
