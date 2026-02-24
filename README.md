@@ -81,7 +81,7 @@ GitHub: [https://github.com/navikt/arbeidsplassen-e2e-tests/actions](https://git
 
 #### dev-e2e (dev-miljø, logger finnes i Nais)
 
-Kjøes ved merge til master i `pam-stillingsok`. Kjører sjekk av universell utforming med: [https://www.npmjs.com/package/@axe-core/playwright](https://www.npmjs.com/package/@axe-core/playwright)<br>
+Kjøres hver time på hverdager mellom 7-17. Kjører sjekk av universell utforming med: [https://www.npmjs.com/package/@axe-core/playwright](https://www.npmjs.com/package/@axe-core/playwright)<br>
 Kjører sjekk av favoritter, ved å logge inn, lagre en favoritt, så sjekke at denne finnes på siden for favoritter.
 
 #### prod-uptest (prod-miljø, logger finnes i GitHub)
