@@ -23,12 +23,12 @@ jobs:
         with:
           fetch-depth: 0
       - name: Build and push
-        uses: nais/docker-build-push@v0
+        uses: nais/docker-build-push@87f920b0411b987d9a1fd4113aa384e1e3b54f2c #v0
         id: docker-build-push
         with:
           team: arbeidsplassen
       - name: Deploy to Nais
-        uses: nais/deploy/actions/deploy@v2
+        uses: nais/deploy/actions/deploy@fa754451577294aae42872a69b888b3470478ec1 #v2
         env:
           CLUSTER: dev-gcp
           RESOURCE: .nais/prod-e2e-tests.yaml
