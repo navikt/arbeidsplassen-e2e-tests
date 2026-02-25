@@ -12,7 +12,7 @@ spec:
   schedule: "*/2 6-23 * * *"
   backoffLimit: 0
   command:
-    - npx
+    - pnpm exec
     - playwright
     - test
     - prod-uptest

@@ -4,7 +4,7 @@ Arbeidsplassen tests
 
 ## Komme i gang
 
-`npm install`
+`pnpm install`
 
 ## Om testene
 
@@ -16,8 +16,8 @@ Testene som ikke er avhengig av en innlogget bruker kjører mot produksjon.
 
 Installer avhengigheter og Playwright-browsere:
 ```bash
-npm ci
-npx playwright install --with-deps
+pnpm install --frozen-lockfile
+pnpm exec playwright install --with-deps
 ```
 ### Start Playwright GUI lokalt
 
@@ -25,18 +25,18 @@ Følgende kommando start Playwright i UI mode, med mulighet for å kjøre en ell
 
 ```bash
 export HTML_VALIDATOR_URL="http://localhost:8888/?out=json"
-npx playwright test --ui
+pnpm exec playwright test --ui
 ```
 
 ### DEV- og tilgjengelighetstester
 Kjør alle dev-/UU-tester:
 ```bash
-npx playwright test dev-e2e
+pnpm exec playwright test dev-e2e
 ```
 
 Kjør en enkelt fil:
 ```bash
-npx playwright test tests/dev-e2e.spec.js
+pnpm exec playwright test tests/dev-e2e.spec.js
 ```
 
 Slack-varsling er som standard skrudd av lokalt.
@@ -45,7 +45,7 @@ For å teste Slack-varsler kan du sette:
 ```bash
 export SLACK_ALERTS_ENABLED=true
 export SLACK_BOT_TOKEN=<token>
-npx playwright test dev-e2e
+pnpm exec playwright test dev-e2e
 ```
 
 ### Prod: lenker og HTML-validering (prod-checklinks)
@@ -64,11 +64,11 @@ docker run --rm -p 8888:8888 ghcr.io/validator/validator:latest
 
 ```bash
 export HTML_VALIDATOR_URL="http://localhost:8888/?out=json"
-npx playwright test tests/prod-checklinks.spec.js
+pnpm exec playwright test tests/prod-checklinks.spec.js
 ```
 ### Playwright-rapport
 ```bash
-npx playwright show-report
+pnpm exec playwright show-report
 ```
 ### Mer informasjon om tester som feiler.
 

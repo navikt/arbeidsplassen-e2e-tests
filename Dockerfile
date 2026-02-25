@@ -7,15 +7,15 @@ ENV HOME=/app
 RUN apt update
 RUN apt upgrade -y
 
-RUN npx -y playwright@1.54.0 install --with-deps
+RUN pnpm exec -y playwright@1.54.0 install --with-deps
 
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN pnpm install
 
 COPY . /app
 
 RUN chown -R 1069:1069 /app
 
-CMD ["npm", "run", "test"]
+CMD ["pnpm", "run", "test"]

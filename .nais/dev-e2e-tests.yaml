@@ -12,7 +12,7 @@ spec:
   schedule: "0 7-17 * * 1-5" # Runs every hour from 7 to 17, every weekday
   backoffLimit: 0
   command:
-    - npx
+    - pnpm exec
     - playwright
     - test
     - dev-e2e
