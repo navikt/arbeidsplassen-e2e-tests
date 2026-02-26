@@ -15,7 +15,7 @@ on:
       - '.github/workflows/deploy-prod-e2e-tests.yml'
 
 jobs:
-  test:
+  run_playwright_tests:
     timeout-minutes: 60
     runs-on: ubuntu-latest
     permissions:
@@ -50,7 +50,7 @@ jobs:
       run: pnpm exec playwright install --with-deps
     - name: Run Playwright tests
       env:
-        HOME: /root
+#        HOME: /root
         HTML_VALIDATOR_URL: "http://nu-html-checker:8888/?out=json"
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         SLACK_ALERTS_ENABLED: true
@@ -58,7 +58,7 @@ jobs:
         GITHUB_RUN_ID: ${{ github.run_id }}
         NAIS_JOBS_URL: "https://console.nav.cloud.nais.io/team/arbeidsplassen/jobs"
       run: pnpm exec playwright test prod-checklinks
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v6
       if: ${{ !cancelled() }}
       with:
         name: playwright-report
