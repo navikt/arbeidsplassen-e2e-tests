@@ -5,6 +5,7 @@ on:
   push:
     branches:
       - main
+      - fix-workflows
     paths-ignore:
       - '*.md'
       - 'tests/prod-uptest.spec.js'
@@ -31,7 +32,6 @@ jobs:
         with:
           team: arbeidsplassen
           image_suffix: arbeidsplassen-e2e-tests
-          name: arbeidsplassen-e2e-tests
       - name: Deploy to Nais
         uses: nais/deploy/actions/deploy@fa754451577294aae42872a69b888b3470478ec1 #v2
         env:
