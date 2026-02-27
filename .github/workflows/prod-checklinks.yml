@@ -50,7 +50,6 @@ jobs:
       run: pnpm exec playwright install --with-deps
     - name: Run Playwright tests
       env:
-#        HOME: /root
         HTML_VALIDATOR_URL: "http://nu-html-checker:8888/?out=json"
         SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
         SLACK_ALERTS_ENABLED: true
