@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - fix-workflows
     paths-ignore:
       - '*.md'
       - 'tests/dev-e2e.spec.js'

@@ -1,4 +1,4 @@
-FROM node:24-bookworm-slim AS base
+FROM node:24-bookworm-slim
 
 ENV TZ="Europe/Oslo"
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/playwright-install
@@ -16,6 +16,6 @@ RUN pnpm exec playwright install --with-deps
 
 COPY . /app
 
-#RUN chown -R 1069:1069 /app
+RUN chown -R 1069:1069 /app
 
 CMD ["pnpm", "run", "test"]
