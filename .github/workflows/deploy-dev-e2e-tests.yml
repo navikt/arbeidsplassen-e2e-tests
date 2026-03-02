@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - fix-workflows
     paths-ignore:
       - '*.md'
       - 'tests/prod-uptest.spec.js'
