@@ -5,10 +5,10 @@
   "type": "module",
   "packageManager": "pnpm@10.30.3",
   "scripts": {
-    "test": "playwright test",
-    "test:dev-e2e": "playwright test dev-e2e",
-    "test:prod-uptest": "playwright test prod-uptest",
-    "test:localhost": "LOCALHOST=true playwright test"
+    "test": "DEBUG_COLORS=false playwright test",
+    "test:dev-e2e": "DEBUG_COLORS=false playwright test dev-e2e",
+    "test:prod-uptest": "DEBUG_COLORS=false playwright test prod-uptest",
+    "test:localhost": "LOCALHOST=true DEBUG_COLORS=false playwright test"
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.10.2",
