@@ -11,7 +11,7 @@ jobs:
     if: ${{ github.event.pull_request.user.login == 'dependabot[bot]' }}
     steps:
       - uses: actions/checkout@v6
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@41ff72655975bd51cab0327fa583b6e92b6d3061 #v4
         name: Install pnpm
         with:
           run_install: false
@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: Dependabot metadata
         id: metadata
-        uses: dependabot/fetch-metadata@v2
+        uses: dependabot/fetch-metadata@21025c705c08248db411dc16f3619e6b5f9ea21a #v2.5.0
         with:
           github-token: "${{ secrets.GITHUB_TOKEN }}"
       - name: Auto-merge changes from Dependabot
