@@ -12,7 +12,7 @@ spec:
   schedule: "*/2 6-23 * * *"
   backoffLimit: 0
   command:
-    - pnpm
+    - "/usr/bin/pnpm"
     - exec
     - playwright
     - test
