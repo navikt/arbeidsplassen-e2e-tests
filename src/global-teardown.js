@@ -82,9 +82,18 @@ function buildBlocksForFailedTests(failedTests) {
 
   const headerText = "❌ Arbeidsplassen E2E – tester feilet";
 
-  //const severity = "Warning";
+  const CRITICAL_TEST_TITLES = [
+    "/stillinger is working in PROD and count is above 0",
+  ];
+
+  const isCritical = uniqueFailedTests.some((failedTest) =>
+      CRITICAL_TEST_TITLES.includes(failedTest.title)
+  );
+
+  const severity = isCritical ? "Critical" : "Warning";
+
   // Bruk eksplisitt hex-farge for å være sikker på at Slack faktisk farger stripen
-  const color = "#ECB22E"; // Slack sin "danger"-aktige farge
+  const color = isCritical ? "#E01E5A" : "#ECB22E"
 
   /** @type {Array<any>} */
   const blocks = [];
@@ -99,25 +108,36 @@ function buildBlocksForFailedTests(failedTests) {
     },
   });
 
+  if (isCritical) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `<!subteam^S01J06FB8RY>`, // Group ID for @arbeidsplassen_no-devs
+      },
+    });
+  }
+
   // Oppsummering
   // bruker bare chromium nå, og severity er allitd warning så per nå kommenterer jeg dette ut
-  /*blocks.push({
+  blocks.push({
     type: "section",
     fields: [
-      {
-        type: "mrkdwn",
-        text: `*Browser(e):*\n\`${Array.from(browserNames).join(", ")}\``,
-      },
-      {
-        type: "mrkdwn",
-        text: `*Antall feilede tester:*\n\`${uniqueFailedTests.length}\``,
-      },
+      // {
+      //   type: "mrkdwn",
+      //   text: `*Browser(e):*\n\`${Array.from(browserNames).join(", ")}\``,
+      // },
+      // {
+      //   type: "mrkdwn",
+      //   text: `*Antall feilede tester:*\n\`${uniqueFailedTests.length}\``,
+      // },
       {
         type: "mrkdwn",
         text: `*Severity:*\n\`${severity}\``,
       },
     ],
-  });*/
+  });
+
 
   blocks.push({ type: "divider" });
 
