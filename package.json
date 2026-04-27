@@ -11,7 +11,7 @@
     "test:localhost": "LOCALHOST=true DEBUG_COLORS=false playwright test"
   },
   "devDependencies": {
-    "@axe-core/playwright": "^4.10.2",
+    "@axe-core/playwright": "^4.11.2",
     "@playwright/test": "^1.59.1",
     "node-fetch": "^3.3.2"
   },
