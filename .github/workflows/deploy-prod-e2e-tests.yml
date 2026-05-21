@@ -1,5 +1,6 @@
 name: Build and deploy prod-e2e-tests
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
