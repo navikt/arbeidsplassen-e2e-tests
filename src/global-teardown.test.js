@@ -146,7 +146,7 @@ test("Slack-meldingen for checklinks skjuler testnummer, [chromium] og det lange
 
   const text = findBlocksText(payload);
   assert.doesNotMatch(text, /\[chromium\]/);
-  assert.doesNotMatch(text, new RegExp(CHECKLINKS_TEST_TITLE.replace(/[.]/g, "\\.")));
+  assert.equal(text.includes(CHECKLINKS_TEST_TITLE), false);
   assert.doesNotMatch(text, /Severity/);
 });
 
