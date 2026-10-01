@@ -24,15 +24,38 @@ const KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE =
     "“paragraph”, “presentation”, “strong”, “subscript”, or “superscript”.";
 const KNOWN_COMBOBOX_MARKUP_SIGNATURE = "aksel-body-short";
 
+// Kjent, aldri-fikset valideringsfeil fra Aksel Pagination: komponenten setter et ugyldig
+// `page`-attributt på sideknappene. Aksel-teamet har bekreftet (okt. 2026) at noen team
+// bruker attributtet som CSS-selector, og at det fjernes først i neste major-versjon.
+// TODO(ARB-312): fjern dette unntaket når Aksel Pagination ikke lenger setter `page`-attributtet.
+const KNOWN_PAGINATION_PAGE_ATTRIBUTE_MESSAGE =
+    "Attribute “page” not allowed on element “button” at this point.";
+const KNOWN_PAGINATION_MARKUP_SIGNATURE = "aksel-pagination__item";
+
+// Legg til flere kjente, midlertidig aksepterte valideringsfeil her etter samme mønster:
+// eksakt feilmelding + en markering i HTML-ekstraktet som bekrefter at det faktisk er
+// den kjente komponenten (fail-closed, se kommentar på isKnownIgnorableValidationError).
+const KNOWN_IGNORABLE_VALIDATION_RULES = [
+  {
+    message: KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE,
+    matchesExtract: (extract) =>
+        extract.includes("<p aria-label=") && extract.includes(KNOWN_COMBOBOX_MARKUP_SIGNATURE),
+  },
+  {
+    message: KNOWN_PAGINATION_PAGE_ATTRIBUTE_MESSAGE,
+    matchesExtract: (extract) =>
+        extract.includes("<button") && extract.includes(KNOWN_PAGINATION_MARKUP_SIGNATURE),
+  },
+];
+
 // Matcher bevisst eksakt melding + kjent komponentmarkering (fail-closed): endrer validatoren
 // ordlyden eller forsvinner markeringen, skal feilen rapporteres igjen i stedet for å bli skjult.
-export const isKnownIgnorableComboboxError = (error) => {
-  if (error?.message !== KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE) {
-    return false;
-  }
-
+export const isKnownIgnorableValidationError = (error) => {
   const extract = typeof error?.extract === "string" ? error.extract : "";
-  return extract.includes("<p aria-label=") && extract.includes(KNOWN_COMBOBOX_MARKUP_SIGNATURE);
+
+  return KNOWN_IGNORABLE_VALIDATION_RULES.some(
+      (rule) => error?.message === rule.message && rule.matchesExtract(extract),
+  );
 };
 
 const sleep = (ms) =>
@@ -276,12 +299,12 @@ async function validateHtml(page, url) {
       const allErrors = result.messages.filter((msg) => msg.type === "error");
       const warnings = result.messages.filter((msg) => msg.type === "warning");
 
-      const ignoredErrors = allErrors.filter(isKnownIgnorableComboboxError);
-      const errors = allErrors.filter((error) => !isKnownIgnorableComboboxError(error));
+      const ignoredErrors = allErrors.filter(isKnownIgnorableValidationError);
+      const errors = allErrors.filter((error) => !isKnownIgnorableValidationError(error));
 
       if (ignoredErrors.length > 0) {
         console.log(
-            `[HTML] Ignorerer ${ignoredErrors.length} kjent(e) combobox-valideringsfeil på ${url}.`,
+            `[HTML] Ignorerer ${ignoredErrors.length} kjent(e) valideringsfeil på ${url}.`,
         );
       }
 
@@ -460,9 +483,14 @@ test("Check internal links, external links and validate HTML on internal pages."
   }
 });
 
-test.describe("HTML validator filter for kjent combobox-feil", () => {
+test.describe("HTML validator filter for kjente valideringsfeil", () => {
   const comboboxExtract =
       '<p aria-label="Deltid (Omfang)" class="aksel-body-short aksel-body-short--medium">Deltid</p>';
+
+  const paginationExtract =
+      '<button data-color="neutral" data-variant="tertiary" aria-current="false" data-pressed="false" ' +
+      'data-page="0" page="0" type="button" class="aksel-pagination__item aksel-pagination--invisible ' +
+      'aksel-button aksel-button--medium aksel-button--icon-only aksel-button--disabled" disabled="">0</button>';
 
   test("ignorerer eksakt melding med kjent combobox-markup", () => {
     const error = {
@@ -470,7 +498,7 @@ test.describe("HTML validator filter for kjent combobox-feil", () => {
       extract: comboboxExtract,
     };
 
-    expect(isKnownIgnorableComboboxError(error)).toBe(true);
+    expect(isKnownIgnorableValidationError(error)).toBe(true);
   });
 
   test("rapporterer samme melding uten Aksel-markeringen", () => {
@@ -479,7 +507,7 @@ test.describe("HTML validator filter for kjent combobox-feil", () => {
       extract: '<p aria-label="Deltid (Omfang)" class="some-other-class">Deltid</p>',
     };
 
-    expect(isKnownIgnorableComboboxError(error)).toBe(false);
+    expect(isKnownIgnorableValidationError(error)).toBe(false);
   });
 
   test("rapporterer aria-label-feil på div selv med lignende markup", () => {
@@ -491,16 +519,25 @@ test.describe("HTML validator filter for kjent combobox-feil", () => {
       extract: '<div aria-label="Noe" class="aksel-body-short">Noe</div>',
     };
 
-    expect(isKnownIgnorableComboboxError(error)).toBe(false);
+    expect(isKnownIgnorableValidationError(error)).toBe(false);
   });
 
-  test("rapporterer ugyldig page-attributt på button", () => {
+  test("ignorerer kjent page-attributt-feil på Aksel Pagination", () => {
+    const error = {
+      message: "Attribute “page” not allowed on element “button” at this point.",
+      extract: paginationExtract,
+    };
+
+    expect(isKnownIgnorableValidationError(error)).toBe(true);
+  });
+
+  test("rapporterer page-attributt-feil på button uten kjent Pagination-markup", () => {
     const error = {
       message: "Attribute “page” not allowed on element “button” at this point.",
       extract: '<button data-page="2" page="2" type="button">2</button>',
     };
 
-    expect(isKnownIgnorableComboboxError(error)).toBe(false);
+    expect(isKnownIgnorableValidationError(error)).toBe(false);
   });
 
   test("skiller kjente og rapporterbare feil i en blandet liste", () => {
@@ -508,15 +545,19 @@ test.describe("HTML validator filter for kjent combobox-feil", () => {
       { message: KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE, extract: comboboxExtract },
       {
         message: "Attribute “page” not allowed on element “button” at this point.",
-        extract: '<button data-page="2" page="2" type="button">2</button>',
+        extract: paginationExtract,
+      },
+      {
+        message: "Element “foo” not allowed as child of element “body” in this context.",
+        extract: "<foo>ukjent feil</foo>",
       },
     ];
 
-    const ignored = errors.filter(isKnownIgnorableComboboxError);
-    const reported = errors.filter((error) => !isKnownIgnorableComboboxError(error));
+    const ignored = errors.filter(isKnownIgnorableValidationError);
+    const reported = errors.filter((error) => !isKnownIgnorableValidationError(error));
 
-    expect(ignored).toHaveLength(1);
+    expect(ignored).toHaveLength(2);
     expect(reported).toHaveLength(1);
-    expect(reported[0].message).toContain("page");
+    expect(reported[0].message).toContain("foo");
   });
 });
