@@ -17,6 +17,7 @@ const MAX_HTML_VALIDATIONS_PER_RUN = Number(process.env.MAX_HTML_VALIDATIONS_PER
 // Kjent, aldri-fikset valideringsfeil fra den gamle Aksel-comboboxen (autocomplete-elementene
 // i søk/filter på bl.a. /stillinger og /sommerjobb). Komponenten får ikke flere oppdateringer
 // og skal erstattes på sikt. Fjern dette unntaket når comboboxen er byttet ut.
+// TODO(ARB-311): fjern dette unntaket når ny combobox/løsning er på plass.
 const KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE =
     "The “aria-label” attribute must not be specified on any “p” element unless the element has a " +
     "“role” value other than “caption”, “code”, “deletion”, “emphasis”, “generic”, “insertion”, " +
