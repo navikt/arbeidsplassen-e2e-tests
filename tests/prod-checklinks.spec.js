@@ -1,4 +1,4 @@
-import { test } from "@playwright/test";
+import { test, expect } from "@playwright/test";
 import { getProdDomain } from "./helpers";
 
 const USER_AGENT =
@@ -13,6 +13,27 @@ const HTML_VALIDATOR_URL = process.env.HTML_VALIDATOR_URL;
 const HTML_VALIDATION_USER_AGENT = "Validator.nu/LV http://validator.w3.org/services";
 
 const MAX_HTML_VALIDATIONS_PER_RUN = Number(process.env.MAX_HTML_VALIDATIONS_PER_RUN ?? "100");
+
+// Kjent, aldri-fikset valideringsfeil fra den gamle Aksel-comboboxen (autocomplete-elementene
+// i søk/filter på bl.a. /stillinger og /sommerjobb). Komponenten får ikke flere oppdateringer
+// og skal erstattes på sikt. Fjern dette unntaket når comboboxen er byttet ut.
+// TODO(ARB-311): fjern dette unntaket når ny combobox/løsning er på plass.
+const KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE =
+    "The “aria-label” attribute must not be specified on any “p” element unless the element has a " +
+    "“role” value other than “caption”, “code”, “deletion”, “emphasis”, “generic”, “insertion”, " +
+    "“paragraph”, “presentation”, “strong”, “subscript”, or “superscript”.";
+const KNOWN_COMBOBOX_MARKUP_SIGNATURE = "aksel-body-short";
+
+// Matcher bevisst eksakt melding + kjent komponentmarkering (fail-closed): endrer validatoren
+// ordlyden eller forsvinner markeringen, skal feilen rapporteres igjen i stedet for å bli skjult.
+export const isKnownIgnorableComboboxError = (error) => {
+  if (error?.message !== KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE) {
+    return false;
+  }
+
+  const extract = typeof error?.extract === "string" ? error.extract : "";
+  return extract.includes("<p aria-label=") && extract.includes(KNOWN_COMBOBOX_MARKUP_SIGNATURE);
+};
 
 const sleep = (ms) =>
     new Promise((resolve) => {
@@ -252,8 +273,17 @@ async function validateHtml(page, url) {
     let hasErrors = false;
 
     if (Array.isArray(result.messages) && result.messages.length > 0) {
-      const errors = result.messages.filter((msg) => msg.type === "error");
+      const allErrors = result.messages.filter((msg) => msg.type === "error");
       const warnings = result.messages.filter((msg) => msg.type === "warning");
+
+      const ignoredErrors = allErrors.filter(isKnownIgnorableComboboxError);
+      const errors = allErrors.filter((error) => !isKnownIgnorableComboboxError(error));
+
+      if (ignoredErrors.length > 0) {
+        console.log(
+            `[HTML] Ignorerer ${ignoredErrors.length} kjent(e) combobox-valideringsfeil på ${url}.`,
+        );
+      }
 
       if (errors.length > 0) {
         console.error(`❌ Found ${errors.length} HTML validation errors on ${url}:`);
@@ -428,4 +458,65 @@ test("Check internal links, external links and validate HTML on internal pages."
     const errorMessages = Object.values(linkIssues).join("\n");
     throw new Error(`Found ${issueCount} errors:\n\n${errorMessages}`);
   }
+});
+
+test.describe("HTML validator filter for kjent combobox-feil", () => {
+  const comboboxExtract =
+      '<p aria-label="Deltid (Omfang)" class="aksel-body-short aksel-body-short--medium">Deltid</p>';
+
+  test("ignorerer eksakt melding med kjent combobox-markup", () => {
+    const error = {
+      message: KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE,
+      extract: comboboxExtract,
+    };
+
+    expect(isKnownIgnorableComboboxError(error)).toBe(true);
+  });
+
+  test("rapporterer samme melding uten Aksel-markeringen", () => {
+    const error = {
+      message: KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE,
+      extract: '<p aria-label="Deltid (Omfang)" class="some-other-class">Deltid</p>',
+    };
+
+    expect(isKnownIgnorableComboboxError(error)).toBe(false);
+  });
+
+  test("rapporterer aria-label-feil på div selv med lignende markup", () => {
+    const error = {
+      message:
+          "The “aria-label” attribute must not be specified on any “div” element unless the element has a " +
+          "“role” value other than “caption”, “code”, “deletion”, “emphasis”, “generic”, “insertion”, " +
+          "“paragraph”, “presentation”, “strong”, “subscript”, or “superscript”.",
+      extract: '<div aria-label="Noe" class="aksel-body-short">Noe</div>',
+    };
+
+    expect(isKnownIgnorableComboboxError(error)).toBe(false);
+  });
+
+  test("rapporterer ugyldig page-attributt på button", () => {
+    const error = {
+      message: "Attribute “page” not allowed on element “button” at this point.",
+      extract: '<button data-page="2" page="2" type="button">2</button>',
+    };
+
+    expect(isKnownIgnorableComboboxError(error)).toBe(false);
+  });
+
+  test("skiller kjente og rapporterbare feil i en blandet liste", () => {
+    const errors = [
+      { message: KNOWN_COMBOBOX_ARIA_LABEL_MESSAGE, extract: comboboxExtract },
+      {
+        message: "Attribute “page” not allowed on element “button” at this point.",
+        extract: '<button data-page="2" page="2" type="button">2</button>',
+      },
+    ];
+
+    const ignored = errors.filter(isKnownIgnorableComboboxError);
+    const reported = errors.filter((error) => !isKnownIgnorableComboboxError(error));
+
+    expect(ignored).toHaveLength(1);
+    expect(reported).toHaveLength(1);
+    expect(reported[0].message).toContain("page");
+  });
 });
