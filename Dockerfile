@@ -4,8 +4,8 @@ ENV TZ="Europe/Oslo"
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/playwright-install
 ENV HOME=/app
 
-RUN apt update
-RUN apt upgrade -y
+# RUN apt update
+# RUN apt upgrade -y
 RUN corepack enable pnpm && corepack install -g pnpm@latest
 
 WORKDIR /app
