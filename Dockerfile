@@ -1,4 +1,4 @@
-FROM node:24-trixie-slim as builder
+FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:24-dev AS builder
 
 ENV TZ="Europe/Oslo"
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/playwright-install
@@ -18,8 +18,8 @@ COPY . /app
 
 FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:24-slim
 
-WORKDIR /app
-
 COPY --from=builder /app /app
+
+WORKDIR /app
 
 CMD ["/usr/bin/pnpm", "run", "test"]
