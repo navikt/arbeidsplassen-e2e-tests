@@ -1,6 +1,4 @@
-FROM europe-north1-docker.pkg.dev/cgr-nav/pull-through/nav.no/node:24-dev AS builder
-
-USER root
+FROM node:24-trixie-slim AS builder
 
 ENV TZ="Europe/Oslo"
 ENV PLAYWRIGHT_BROWSERS_PATH=/app/playwright-install
